@@ -3,13 +3,15 @@
 >
 > A firmware build distributed under the name **"L15Dev" / "Bitwire"** has been reported to contain **malware (a virus) and a backdoor**. **Do not download, flash, or run it under any circumstances.**
 >
-> Only use the official builds from this repository / the [web flasher](https://sor3nt.github.io/interface.html). If you already flashed an "L15Dev" image, re-flash a clean official build and treat any credentials/data on the device (WiFi passwords, captures) as compromised.
-
 > WARNING: I do not take responsibility if you damage your board or property. This guide is for educational purposes only — proceed at your own risk.
 
 # Flipper Zero ESP32 Port
 
 A port of the [Flipper Zero](https://flipperzero.one/) firmware to ESP32-based development boards. This project brings the Flipper Zero UI, services, and application framework to affordable ESP32 hardware — no Flipper Zero required.
+
+## Credits
+
+This is based on the official **[Flipper Zero ESP32 Port](https://github.com/Sor3nt/Flipper-Zero-ESP32-Port)** by **Sor3nt** — all credit for the original architecture, HAL, and app ports goes to that project. This fork adds a port of the firmware to the **ESP32-S3 Super Mini** board paired with a 128×64 SSD1306 OLED (see [Wiring](#esp32-s3-super-mini--ssd1306-wiring) below), plus a few extra apps.
 
 ## Discord
 
@@ -17,45 +19,101 @@ Join the [Flipper Zero meets ESP32 - Discord](https://discord.gg/5DnAqFXaBC) for
 
 ## Supported Boards
 
-![img](pic1.jpg)
 
-| Board | MCU | Display | Input | SubGHz | NFC | IR | SD Card |
-|---|---|---|---|---|---|---|---|
-| **LilyGo T-Embed CC1101** | ESP32-S3 (Xtensa LX7) | ST7789 320×170 | Rotary encoder + button | CC1101 | PN532 (I2C) | RMT TX + RX | SPI |
-| **Waveshare ESP32-C6-LCD-1.9** | ESP32-C6 (RISC-V) | ST7789V2 320×172 | CST816S touch | — | — | — | SPI |
-| **Waveshare ESP32-C6-LCD-1.47** ⚠️ | ESP32-C6 (RISC-V) | JD9853 320×172 | AXS5106L touch | — | — | — | SPI |
-| ** DIY ESP32-S3 with 2.8" TFT ** ⚠️| ESP32-S3 (Xtensa LX7) |2.8  ILI9341 320×240 | 6× Tactile buttons | CC1101 | PN532 (I2C) |  TX  | SPI |
 | **ESP32-S3 Super Mini + SSD1306** ⚠️ | ESP32-S3FH4R2 (4MB Flash, 2MB PSRAM) | SSD1306 128×64 mono (I2C) | 6× Tactile buttons | CC1101 | — | — | SPI (shared w/ CC1101) |
 
 
-> ⚠️ **Waveshare ESP32-C6-LCD-1.47 — supported but barely usable.** The board builds, boots and the UI/touch work, but the ESP32-C6 has only **512 KB SRAM and no PSRAM**. RAM-heavy apps are effectively non-functional. In particular **WiFi**: a normal AP scan works, but **monitor mode / handshake capture fails** — by the time the app's buffers are allocated the WiFi driver can no longer allocate its DMA buffers (`esf_buf_setup_static: alloc eb fail` → `ESP_ERR_NO_MEM`), so no frames are received. Treat this board as usable only for lightweight apps until the WiFi app's memory footprint is reduced (it was designed for the PSRAM-equipped T-Embed).
-
-> ⚠️ ** DIY ESP32-S3 with 2.8" TFT ** - Currently supported via a fork pending full integration, work in progress, ready to flash bins also available in the discord, updated each release
-
 > ⚠️ **ESP32-S3 Super Mini + SSD1306 — expect to trim apps.** The Super Mini's ESP32-S3FH4R2 has only 4MB flash and 2MB PSRAM (vs. the T-Embed's 16MB/8MB), so this firmware's full app set may not fit in the single-app partition as-is. NFC, IR, NRF24 and Wolf3D are already excluded (no hardware for them on this board — see `fam_config.py`); if the build still overflows the partition, remove more apps there (WiFi and BLE are the biggest). The mono 128×64 OLED is the Flipper's *native* framebuffer resolution, so unlike the color-LCD boards there's no upscaling — what you see is the raw Flipper UI, pixel for pixel.
->
-> **Wiring** (`FLIPPER_BOARD=esp32s3_supermini_ssd1306`):
->
-> | OLED SSD1306 (I2C) | ESP32-S3 | | CC1101 (SPI) | ESP32-S3 | | Buttons (→ GND) | ESP32-S3 |
-> |---|---|---|---|---|---|---|---|
-> | SDA | GPIO8 | | CSN | GPIO7 | | Up | GPIO10 |
-> | SCL | GPIO9 | | SCK | GPIO4 | | Down | GPIO11 |
-> | VCC | 3.3V | | MOSI | GPIO6 | | OK | GPIO12 |
-> | GND | GND | | MISO | GPIO5 | | Back | GPIO13 |
-> | | | | GDO0 | GPIO3 | | Left (reserved) | GPIO1 |
-> | | | | GDO2 | not connected | | Right (reserved) | GPIO2 |
->
-> MicroSD shares the CC1101 SPI bus: CLK=GPIO4, MOSI=GPIO6, MISO=GPIO5, CS=GPIO43 (the board's silkscreened "TX" pin). Buttons use the internal pull-ups (`INPUT_PULLUP`) — wire one leg to the GPIO and the other to GND, no external resistor needed. Left/Right are polled and debounced but have no menu action yet (reserved for game controls). Default OLED I2C address is `0x3C`; if your module uses `0x3D`, change `BOARD_OLED_I2C_ADDR` in `components/furi_hal/boards/board_esp32s3_supermini_ssd1306.h`.
 
-![img](pic2.jpg)
+### ESP32-S3 Super Mini + SSD1306 Wiring
+
+`FLIPPER_BOARD=esp32s3_supermini_ssd1306`. Power every module from **3.3V — do not use 5V** on the CC1101 or the OLED I2C bus.
+
+#### Hardware needed
+
+| Component | Role |
+|---|---|
+| ESP32-S3 Super Mini | Main MCU (native USB, 3.3V) |
+| CC1101 module | Sub-GHz transceiver (SPI) |
+| SSD1306 128×64 OLED | Display (I2C) |
+| 6× tactile buttons | Navigation (Up / Down / OK / Back / Left / Right) |
+| MicroSD (optional) | `.sub` / `.key` files under `/subghz` |
+| Antenna | Matched to the CC1101 band in use (e.g. 433 MHz) |
+
+#### OLED SSD1306 (I2C)
+
+| OLED | ESP32-S3 Supermini|
+|---|---|
+| SDA | GPIO8 |
+| SCL | GPIO9 |
+| VCC | 3.3V |
+| GND | GND |
+
+Default I2C address is `0x3C`. If your module uses `0x3D`, change `BOARD_OLED_I2C_ADDR` in [`components/furi_hal/boards/board_esp32s3_supermini_ssd1306.h`](components/furi_hal/boards/board_esp32s3_supermini_ssd1306.h).
+
+#### CC1101 (SPI, shared bus with MicroSD)
+
+| CC1101 | ESP32-S3 Supermini |
+|---|---|
+| VCC | 3.3V |
+| GND | GND |
+| CSN / CS | GPIO7 |
+| SCK | GPIO4 |
+| MOSI / SI | GPIO6 |
+| MISO / SO | GPIO5 |
+| GDO0 | GPIO3 |
+| GDO2 | not connected |
+
+#### Buttons (one leg to GPIO, other to GND)
+
+Internal pull-ups are enabled by firmware — no external resistor needed.
+
+| Button | GPIO |
+|---|---|
+| Up | GPIO10 |
+| Down | GPIO11 |
+| OK | GPIO12 |
+| Back | GPIO13 |
+| Left | GPIO1 |
+| Right | GPIO2 |
+
+Left/Right are wired, polled, and debounced exactly like the other four — the main menu just doesn't use them for navigation (reserved for game controls, e.g. Doom/Snake). Apps that bind Left/Right directly, like Sub-GHz's Config screen, use them normally.
+
+#### MicroSD (shares the CC1101 SPI bus)
+
+| MicroSD pad | SPI role | ESP32-S3 Super mini|
+|---|---|---|
+| CLK | SCK | GPIO4 |
+| CMD | MOSI | GPIO6 |
+| DAT0 | MISO | GPIO5 |
+| DAT3 | CS | GPIO43 (silkscreened "TX") |
+| VCC / GND | — | 3.3V / GND |
 
 ## How to Flash
 
 The easiest way is the **web flasher** — no toolchain required, just a Chrome/Edge browser and a USB cable:
 
-**[Flash via Browser](https://sor3nt.github.io/interface.html)**
+**[Flash via Browser](https://esptool.spacehuhn.com/)**
 
 Connect your board, click flash, done. After flashing, copy the contents of [`https://github.com/Sor3nt/Flipper-Zero-ESP32-Port/releases/download/v1.1.5/sdcard.zip`](sdcard/) onto a FAT32 SD card and insert it — most apps need files there to function.
+
+### ESP32-S3 Super Mini — manual flash
+
+Prebuilt binaries are available in [`release/`](release/) — no build required:
+
+1. Download the three files from [`release/`](release/): [`bootloader.bin`](release/bootloader.bin), [`partition-table.bin`](release/partition-table.bin), [`furi_esp32.bin`](release/furi_esp32.bin). (Prefer to build it yourself instead? See [Building](#building) below — `./build.sh --board s3_supermini` on Linux/macOS, `python winbuild.py build --board s3_supermini` on Windows — which produces the same three files in `build_s3_supermini/`.)
+2. Open **[esptool.spacehuhn.com](https://esptool.spacehuhn.com/)** in Chrome or Edge and click **Connect** — select your board's USB serial port.
+3. Add each file below at its matching offset (the tool lets you queue multiple file/offset pairs before flashing):
+
+   | File | Offset |
+   |---|---|
+   | `bootloader.bin` | `0x0` |
+   | `partition-table.bin` | `0x8000` |
+   | `furi_esp32.bin` | `0x10000` |
+
+4. Flash settings, if the tool asks instead of auto-detecting: mode `DIO`, frequency `80MHz`, size `4MB`.
+5. Click **Program** and wait for it to finish.
+6. Copy the contents of `sdcard.zip` onto a FAT32 microSD card and insert it — same as any other board.
 
 ## Apps
 
