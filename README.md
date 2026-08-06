@@ -5,6 +5,7 @@
 >
 > WARNING: I do not take responsibility if you damage your board or property. This guide is for educational purposes only — proceed at your own risk.
 
+
 # Flipper Zero ESP32 S3 Super Mini Port
 
 ![Flipper Zero ESP32 S3 Super Mini](img/IMG.png)
