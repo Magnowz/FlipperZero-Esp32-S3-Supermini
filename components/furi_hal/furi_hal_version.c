@@ -5,18 +5,26 @@
 #include <stdint.h>
 
 #include <esp_mac.h>
+#include <saved_struct.h>
+
+/* Custom device name, persisted directly to internal-flash NVS (no SD card,
+ * no separate STARTUP-hook service). "/int/" mirrors the Furi Storage
+ * convention for internal-flash-backed paths even though saved_struct talks
+ * to NVS directly and only uses the basename as the key. */
+#define DEVICE_NAME_NVS_PATH    "/int/.device_name.settings"
+#define DEVICE_NAME_NVS_MAGIC   0x4E
+#define DEVICE_NAME_NVS_VERSION 1
 
 /* -------------------------------------------------------------------------
  * eFuse-derived device identity
  *
- * Rather than a static "ESP32" name, derive a stable, human-readable name
- * from the factory-burned eFuse MAC — the same approach the original
- * Flipper Zero firmware uses with its OTP memory.
- *
- * The name is selected from the table below using a mixing hash of all 6
- * MAC bytes.  Every device gets a consistent, unique-ish name at first boot
- * without any user interaction.  The user can still override it through the
- * Settings → Desktop → Name screen (stored in /dolphin/name.settings).
+ * Used as the fallback name pool by furi_hal_version_set_name(NULL/"") — a
+ * stable, human-readable name derived from the factory-burned eFuse MAC via
+ * a mixing hash, the same approach the original Flipper Zero firmware uses
+ * with its OTP memory. The primary boot-time default lives in
+ * furi_hal_version_init() below; a custom name set via Settings → Desktop →
+ * Change Flipper Name is persisted to internal-flash NVS and takes priority
+ * over both.
  * -------------------------------------------------------------------------*/
 
 static const char* const s_device_name_pool[] = {
@@ -77,17 +85,42 @@ void furi_hal_version_init(void) {
     esp_efuse_mac_get_default(furi_hal_version.uid);
     memcpy(furi_hal_version.ble_mac, furi_hal_version.uid, sizeof(furi_hal_version.uid));
 
-    /* Determine effective name:
-     *   1. If a custom name was already loaded (e.g., from namechanger), use it.
-     *   2. Otherwise derive a stable name from the eFuse MAC. */
-    const char* custom = version_get_custom_name(NULL);
-    const char* effective;
-    if(custom && custom[0]) {
-        effective = custom;
+    /* Load a custom name from internal-flash NVS (set via Settings -> Desktop
+     * -> Change Flipper Name). Falls back to the hardcoded default below if
+     * none was ever saved. NVS is ready by this point — nvs_flash_init() runs
+     * earlier in furi_hal_init(), right before this call. */
+    char stored_name[FURI_HAL_VERSION_ARRAY_NAME_LENGTH] = {0};
+    bool loaded = saved_struct_load(
+        DEVICE_NAME_NVS_PATH,
+        stored_name,
+        sizeof(stored_name),
+        DEVICE_NAME_NVS_MAGIC,
+        DEVICE_NAME_NVS_VERSION);
+
+    if(loaded && stored_name[0]) {
+        furi_hal_version_refresh_names(stored_name);
     } else {
-        effective = s_device_name_pool[derive_name_index(furi_hal_version.uid)];
+        furi_hal_version_refresh_names("Flipper");
     }
-    furi_hal_version_refresh_names(effective);
+}
+
+bool furi_hal_version_save_custom_name(const char* name) {
+    char buf[FURI_HAL_VERSION_ARRAY_NAME_LENGTH] = {0};
+    if(name) {
+        snprintf(buf, sizeof(buf), "%s", name);
+    }
+
+    bool ok = saved_struct_save(
+        DEVICE_NAME_NVS_PATH,
+        buf,
+        sizeof(buf),
+        DEVICE_NAME_NVS_MAGIC,
+        DEVICE_NAME_NVS_VERSION);
+
+    if(ok) {
+        furi_hal_version_refresh_names(buf[0] ? buf : "sn1q");
+    }
+    return ok;
 }
 
 bool furi_hal_version_do_i_belong_here(void) {

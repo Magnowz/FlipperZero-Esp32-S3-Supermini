@@ -4,7 +4,6 @@
 #include <submenu.h>
 #include <assets_icons.h>
 #include <applications.h>
-#include <archive/helpers/archive_favorites.h>
 #include <esp_rom_sys.h>
 
 #include "loader.h"
@@ -115,10 +114,8 @@ static void loader_menu_applications_callback(void* context, uint32_t index) {
 static void
     loader_menu_settings_menu_callback(void* context, InputType input_type, uint32_t index) {
     UNUSED(context);
-    if(input_type == InputTypeShort) {
+    if(input_type == InputTypeShort || input_type == InputTypeLong) {
         loader_menu_start((const char*)index);
-    } else if(input_type == InputTypeLong) {
-        archive_favorites_handle_setting_pin_unpin((const char*)index, NULL);
     }
 }
 

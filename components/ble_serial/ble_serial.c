@@ -17,6 +17,7 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <freertos/task.h>
 
 #include <esp_bt.h>
 #include <esp_bt_defs.h>
@@ -1118,6 +1119,23 @@ error:
 
 void ble_serial_free(BleSerial* serial) {
     if(!serial) return;
+
+    /* If a peer is still connected (e.g. switching BLE profiles while a
+     * client has an open session), force a real disconnect and wait for it
+     * to land before touching the GATT server. Unregistering the app while
+     * a client is still connected leaves Bluedroid's internal state
+     * corrupted — it surfaces as "service not created" / "application not
+     * registered" errors on the *next* profile's registration. */
+    if(ble_serial_is_connected(serial)) {
+        ESP_LOGI(TAG, "free: peer still connected, disconnecting first");
+        esp_ble_gatts_close(serial->gatts_if, serial->conn_id);
+        for(int i = 0; i < 50 && ble_serial_is_connected(serial); i++) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+        if(ble_serial_is_connected(serial)) {
+            ESP_LOGW(TAG, "free: peer did not disconnect within 500ms, proceeding anyway");
+        }
+    }
 
     serial_lock_global();
     if(serial_state.advertising) {

@@ -74,6 +74,10 @@ const char* furi_hal_version_get_name_ptr(void);
 const char* furi_hal_version_get_device_name_ptr(void);
 const char* furi_hal_version_get_ble_local_device_name_ptr(void);
 void furi_hal_version_set_name(const char* name);
+/** Persist a custom device name to internal flash (NVS) and apply it live.
+ *  Pass NULL or "" to clear the override (falls back to the built-in default
+ *  on next boot). Returns false if the NVS write failed. */
+bool furi_hal_version_save_custom_name(const char* name);
 const uint8_t* furi_hal_version_get_ble_mac(void);
 
 const struct Version* furi_hal_version_get_firmware_version(void);

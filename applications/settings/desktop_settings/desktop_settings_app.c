@@ -2,8 +2,6 @@
 #include <gui/modules/popup.h>
 #include <gui/modules/dialog_ex.h>
 #include <gui/scene_manager.h>
-#include <namechanger/namechanger.h>
-#include <flipper_format/flipper_format.h>
 #include <power/power_service/power.h>
 
 #include <desktop/desktop.h>
@@ -88,24 +86,9 @@ void desktop_settings_app_free(DesktopSettingsApp* app) {
     furi_assert(app);
 
     bool temp_save_name = app->save_name;
-    // Save name if set or remove file
+    // Save name to internal-flash NVS (no SD card / storage service needed).
     if(temp_save_name) {
-        Storage* storage = furi_record_open(RECORD_STORAGE);
-        if(strcmp(app->device_name, "") == 0) {
-            storage_simply_remove(storage, NAMECHANGER_PATH);
-        } else {
-            FlipperFormat* file = flipper_format_file_alloc(storage);
-
-            do {
-                if(!flipper_format_file_open_always(file, NAMECHANGER_PATH)) break;
-                if(!flipper_format_write_header_cstr(file, NAMECHANGER_HEADER, NAMECHANGER_VERSION))
-                    break;
-                if(!flipper_format_write_string_cstr(file, "Name", app->device_name)) break;
-            } while(0);
-
-            flipper_format_free(file);
-        }
-        furi_record_close(RECORD_STORAGE);
+        furi_hal_version_save_custom_name(app->device_name);
     }
 
     // Variable item list

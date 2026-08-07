@@ -102,6 +102,11 @@
 #define BOARD_HAS_IR            0
 #define BOARD_HAS_IBUTTON       0
 #define BOARD_HAS_RFID          0
+
+/* Single USB-C port doubles as the flashing/console USB-Serial-JTAG bridge.
+ * Claiming it for USB-OTG (HID, MSC, ...) drops that bridge, so apps should
+ * default to BLE instead of grabbing USB unconditionally. */
+#define BOARD_USB_SHARED_WITH_CONSOLE 1
 #define BOARD_HAS_NFC           0
 #define BOARD_HAS_SUBGHZ        1  /* Built-in CC1101 */
 #define BOARD_HAS_MIC           0

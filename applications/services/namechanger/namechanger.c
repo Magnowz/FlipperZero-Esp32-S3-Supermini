@@ -17,12 +17,12 @@ static bool namechanger_init() {
         if(storage_sd_status(storage) == FSE_OK) break;
         furi_delay_ms(250);
         timeout++;
-        /*if(timeout == 10) {
-            // Failed to init namechanger, SD card not ready
-            furi_record_close(RECORD_STORAGE);
-            return false;
-        }*/
     }
+    FURI_LOG_I(
+        TAG,
+        "sd_status=%d after %u ms wait",
+        storage_sd_status(storage),
+        (unsigned)timeout * 250);
 
     FuriString* str = furi_string_alloc();
     FlipperFormat* file = flipper_format_file_alloc(storage);
@@ -31,16 +31,38 @@ static bool namechanger_init() {
 
     do {
         uint32_t version;
-        if(!flipper_format_file_open_existing(file, NAMECHANGER_PATH)) break;
-        if(!flipper_format_read_header(file, str, &version)) break;
-        if(furi_string_cmp_str(str, NAMECHANGER_HEADER)) break;
-        if(version != NAMECHANGER_VERSION) break;
+        if(!flipper_format_file_open_existing(file, NAMECHANGER_PATH)) {
+            FURI_LOG_W(TAG, "open_existing(%s) failed", NAMECHANGER_PATH);
+            break;
+        }
+        if(!flipper_format_read_header(file, str, &version)) {
+            FURI_LOG_W(TAG, "read_header failed");
+            break;
+        }
+        if(furi_string_cmp_str(str, NAMECHANGER_HEADER)) {
+            FURI_LOG_W(TAG, "header mismatch: '%s'", furi_string_get_cstr(str));
+            break;
+        }
+        if(version != NAMECHANGER_VERSION) {
+            FURI_LOG_W(TAG, "version mismatch: %lu", (unsigned long)version);
+            break;
+        }
 
-        if(!flipper_format_read_string(file, "Name", str)) break;
+        if(!flipper_format_read_string(file, "Name", str)) {
+            FURI_LOG_W(TAG, "read_string(Name) failed");
+            break;
+        }
+        FURI_LOG_I(TAG, "read name='%s'", furi_string_get_cstr(str));
         // Check for size
         size_t temp_string_size = furi_string_size(str);
-        if(temp_string_size > (size_t)8) break;
-        if(temp_string_size < (size_t)2) break;
+        if(temp_string_size > (size_t)8) {
+            FURI_LOG_W(TAG, "name too long: %u", (unsigned)temp_string_size);
+            break;
+        }
+        if(temp_string_size < (size_t)2) {
+            FURI_LOG_W(TAG, "name too short: %u", (unsigned)temp_string_size);
+            break;
+        }
 
         // Check for forbidden characters
         const char* name_ptr = furi_string_get_cstr(str);
@@ -54,11 +76,15 @@ static bool namechanger_init() {
             }
         }
 
-        if(chars_check_failed) break;
+        if(chars_check_failed) {
+            FURI_LOG_W(TAG, "forbidden character in name");
+            break;
+        }
 
         // If all checks was good we can set the name
         version_set_custom_name(NULL, strdup(furi_string_get_cstr(str)));
         furi_hal_version_set_name(version_get_custom_name(NULL));
+        FURI_LOG_I(TAG, "name applied successfully");
 
         res = true;
     } while(false);
@@ -70,10 +96,10 @@ static bool namechanger_init() {
     return res;
 }
 
-int32_t namechanger_on_system_start(void* p) {
-    UNUSED(p);
+void namechanger_on_system_start(void) {
+    FURI_LOG_I(TAG, "on_system_start entered, boot_mode=%d", furi_hal_rtc_get_boot_mode());
     if(furi_hal_rtc_get_boot_mode() != FuriHalRtcBootModeNormal) {
-        return 0;
+        return;
     }
 
     // Wait for all required services to start and create their records
@@ -82,10 +108,12 @@ int32_t namechanger_on_system_start(void* p) {
           !furi_record_exists(RECORD_STORAGE)) {
         timeout++;
         if(timeout > 250) {
-            return 0;
+            FURI_LOG_E(TAG, "timed out waiting for cli_vcp/bt/storage records");
+            return;
         }
         furi_delay_ms(5);
     }
+    FURI_LOG_I(TAG, "required records ready after %u ms, calling namechanger_init", (unsigned)timeout * 5);
 
     // Hehe bad code now here, bad bad bad, very bad, bad example, dont take it, make it better
 
@@ -105,6 +133,4 @@ int32_t namechanger_on_system_start(void* p) {
         bt = NULL;
         furi_delay_ms(3);
     }
-
-    return 0;
 }

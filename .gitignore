@@ -9,7 +9,7 @@ sdkconfig.old
 .DS_Store
 build_waveshare_c6/
 .vscode/settings.json
-
+build_s3_supermini/
 # Local-dev tooling (not for upstream)
 _flash_helper.py
 

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "../desktop_settings_app.h"
 #include <desktop/desktop_settings.h>
 #include "desktop_settings_scene.h"
@@ -33,6 +35,13 @@ static bool desktop_settings_scene_change_name_validator(
 void desktop_settings_scene_change_name_on_enter(void* context) {
     DesktopSettingsApp* app = context;
     TextInput* text_input = app->text_input;
+
+    if(app->device_name[0] == '\0') {
+        const char* current_name = furi_hal_version_get_name_ptr();
+        if(current_name) {
+            strlcpy(app->device_name, current_name, FURI_HAL_VERSION_ARRAY_NAME_LENGTH);
+        }
+    }
 
     text_input_set_header_text(text_input, "Leave empty for default");
 

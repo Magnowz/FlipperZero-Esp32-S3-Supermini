@@ -9,6 +9,7 @@ MANIFEST_ROOTS = [
 APP_SOURCE_OVERRIDES = {
     "desktop": "applications",
     "storage": "applications",
+    "desktop_settings": "applications",
 }
 
 APPS = [
@@ -28,6 +29,7 @@ APPS = [
     "loader_start",
     "notification_settings",
     "desktop",
+    "desktop_settings",
     "archive",
     "about",
     "bt_settings",

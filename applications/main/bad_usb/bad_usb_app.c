@@ -2,6 +2,7 @@
 #include <furi.h>
 #include <furi_hal.h>
 #include <toolbox/path.h>
+#include "boards/board.h"
 
 #define BAD_USB_SETTINGS_DEFAULT_LAYOUT BAD_USB_APP_PATH_LAYOUT_FOLDER "/en-US.kl"
 
@@ -27,8 +28,14 @@ static void bad_usb_load_settings(BadUsbApp* app) {
     BadUsbHidConfig* hid_cfg = &app->user_hid_cfg;
 
     furi_string_set(app->keyboard_layout, BAD_USB_SETTINGS_DEFAULT_LAYOUT);
+#if defined(BOARD_USB_SHARED_WITH_CONSOLE) && (BOARD_USB_SHARED_WITH_CONSOLE == 1)
+    /* USB is the flashing/console bridge on this board — default to BLE so
+     * opening BadUSB doesn't silently drop that connection. */
+    app->interface = BadUsbHidInterfaceBle;
+#else
     app->interface =
         bad_usb_hid_supports_usb() ? BadUsbHidInterfaceUsb : BadUsbHidInterfaceBle;
+#endif
     hid_cfg->ble.name[0] = '\0';
     memset(hid_cfg->ble.mac, 0, sizeof(hid_cfg->ble.mac));
     hid_cfg->ble.bonding = true;
@@ -114,7 +121,11 @@ BadUsbApp* bad_usb_app_alloc(char* arg) {
 
     bad_usb_set_interface(app, app->interface);
 
-    if(!bad_usb_hid_supports_usb()) {
+    if(!bad_usb_hid_supports_usb() || app->interface != BadUsbHidInterfaceUsb) {
+        /* BLE mode (or no USB-OTG support) — leave the USB peripheral alone.
+         * Touching it here would tear down an unrelated USB session (e.g. the
+         * flashing/monitor bridge on boards that share the port) even though
+         * this run never uses USB HID. */
         app->usb_if_prev = NULL;
     } else if(furi_hal_usb_is_locked()) {
         app->usb_if_prev = NULL;
