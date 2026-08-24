@@ -24,6 +24,7 @@ Join the [Flipper Zero meets ESP32 - Discord](https://discord.gg/5DnAqFXaBC) for
 
 
 | **ESP32-S3 Super Mini + SSD1306** ⚠️ | ESP32-S3FH4R2 (4MB Flash, 2MB PSRAM) | SSD1306 128×64 mono (I2C) | 6× Tactile buttons | CC1101 | — | — | SPI (shared w/ CC1101) |
+| **ESP32-S3 Super Mini + ST7565** ⚠️ | ESP32-S3FH4R2 (4MB Flash, 2MB PSRAM) | ST7565 128×64 mono (SPI, e.g. GMG12864-06D) | 6× Tactile buttons | CC1101 | — | — | SPI (shared w/ CC1101) |
 
 
 > ⚠️ **ESP32-S3 Super Mini + SSD1306 — expect to trim apps.** The Super Mini's ESP32-S3FH4R2 has only 4MB flash and 2MB PSRAM (vs. the T-Embed's 16MB/8MB), so this firmware's full app set may not fit in the single-app partition as-is. NFC, IR, NRF24 and Wolf3D are already excluded (no hardware for them on this board — see `fam_config.py`); if the build still overflows the partition, remove more apps there (WiFi and BLE are the biggest). The mono 128×64 OLED is the Flipper's *native* framebuffer resolution, so unlike the color-LCD boards there's no upscaling — what you see is the raw Flipper UI, pixel for pixel.
@@ -91,6 +92,84 @@ Left/Right are wired, polled, and debounced exactly like the other four — the 
 | DAT0 | MISO | GPIO5 |
 | DAT3 | CS | GPIO43 (silkscreened "TX") |
 | VCC / GND | — | 3.3V / GND |
+
+### ESP32-S3 Super Mini + ST7565 Wiring
+
+`FLIPPER_BOARD=esp32s3_supermini_st7565`. Same base board and same pin budget as the SSD1306 variant above — no new GPIOs. The LCD's SCLK/MOSI are CS-muxed onto the same SPI2 bus already wired for CC1101/SD, and its CS/DC lines reuse the exact pins the SSD1306 variant used for I2C (SDA/SCL, GPIO8/9). Power the panel from **3.3V — do not use 5V**, and check its datasheet/breakout silkscreen for its actual VDD/VSS/PSB pin names before wiring, since COG modules vary between vendors.
+
+#### Hardware needed
+
+| Component | Role |
+|---|---|
+| ESP32-S3 Super Mini | Main MCU (native USB, 3.3V) |
+| CC1101 module | Sub-GHz transceiver (SPI) |
+| ST7565 128×64 LCD (e.g. GMG12864-06D) | Display (SPI, shares the CC1101/SD bus) |
+| 6× tactile buttons | Navigation (Up / Down / OK / Back / Left / Right) |
+| MicroSD (optional) | `.sub` / `.key` files under `/subghz` |
+| Antenna | Matched to the CC1101 band in use (e.g. 433 MHz) |
+
+#### ST7565 LCD (4-wire SPI, CS-muxed onto the CC1101/SD SPI2 bus)
+
+| LCD | ESP32-S3 Supermini | Note |
+|---|---|---|
+| SCL / SCLK | GPIO4 | same pin as CC1101 SCK below |
+| SI / MOSI | GPIO6 | same pin as CC1101 MOSI below |
+| CS | GPIO8 | ex-OLED SDA pin |
+| A0 / RS (DC) | GPIO9 | ex-OLED SCL pin |
+| RST | tie to 3.3V through a ~10kΩ resistor | no dedicated GPIO — firmware falls back to a software reset (`0xE2`) |
+| VDD | 3.3V | |
+| VSS | GND | |
+
+The panel is written straight to GDDRAM at the Flipper's native 128×64 resolution — no scaling. If the image is blank, mirrored, or shifted sideways, tune the bias/ADC/COM-direction commands or `BOARD_LCD_COL_OFFSET` in [`components/furi_hal/boards/board_esp32s3_supermini_st7565.h`](components/furi_hal/boards/board_esp32s3_supermini_st7565.h) — these vary between ST7565 panel vendors. Contrast can be tuned in the same file's init sequence in [`furi_hal_display.c`](components/furi_hal/furi_hal_display.c). Sharing the bus with CC1101/SD is safe: every LCD write goes through the same `furi_hal_spi_acquire()`/`furi_hal_spi_release()` mutex those peripherals use (see `furi_hal_spi_bus_handle_lcd_st7565` in [`furi_hal_spi.c`](components/furi_hal/furi_hal_spi.c)), so transactions can't interleave.
+
+#### CC1101 (SPI, shared bus with MicroSD and the LCD above)
+
+| CC1101 | ESP32-S3 Supermini |
+|---|---|
+| VCC | 3.3V |
+| GND | GND |
+| CSN / CS | GPIO7 |
+| SCK | GPIO4 |
+| MOSI / SI | GPIO6 |
+| MISO / SO | GPIO5 |
+| GDO0 | GPIO3 |
+| GDO2 | not connected |
+
+#### Buttons (one leg to GPIO, other to GND)
+
+Internal pull-ups are enabled by firmware — no external resistor needed.
+
+| Button | GPIO |
+|---|---|
+| Up | GPIO10 |
+| Down | GPIO11 |
+| OK | GPIO12 |
+| Back | GPIO13 |
+| Left | GPIO1 |
+| Right | GPIO2 |
+
+Left/Right are wired, polled, and debounced exactly like the other four — the main menu just doesn't use them for navigation (reserved for game controls, e.g. Doom/Snake). Apps that bind Left/Right directly, like Sub-GHz's Config screen, use them normally.
+
+#### MicroSD (shares the CC1101/LCD SPI bus)
+
+| MicroSD pad | SPI role | ESP32-S3 Super mini|
+|---|---|---|
+| CLK | SCK | GPIO4 |
+| CMD | MOSI | GPIO6 |
+| DAT0 | MISO | GPIO5 |
+| DAT3 | CS | GPIO43 (silkscreened "TX") |
+| VCC / GND | — | 3.3V / GND |
+
+#### NFC PN532 (I2C, optional — moved off GPIO8/9 since the LCD now uses them)
+
+| PN532 | ESP32-S3 Supermini |
+|---|---|
+| SCL | GPIO14 |
+| SDA | GPIO15 |
+| VCC | 3.3V |
+| GND | GND |
+
+Build/flash it with `python winbuild.py build --board s3_supermini_st7565` (`s3_supermini_st7565.bat build` / `flash` / `all` on Windows) or `./build.sh --board s3_supermini_st7565` on Linux/macOS.
 
 ## How to Flash
 
@@ -292,6 +371,9 @@ A complete starter kit is in [`sdcard.zip`](sdcard.zip) — extract it onto a FA
 
 # ESP32-S3 Super Mini + SSD1306 (no dedicated script yet — use the generic build.sh)
 ./build.sh --board s3_supermini
+
+# ESP32-S3 Super Mini + ST7565
+./build.sh --board s3_supermini_st7565
 ```
 
 ### Build & Flash (Windows)
@@ -314,6 +396,9 @@ python winbuild.py build --board waveshare_c6
 :: Build ESP32-S3 Super Mini + SSD1306
 python winbuild.py build --board s3_supermini
 
+:: Build ESP32-S3 Super Mini + ST7565
+python winbuild.py build --board s3_supermini_st7565
+
 :: Flash (port defaults to %ESPPORT% or COM14)
 python winbuild.py flash --board s3_supermini --port COM14
 
@@ -324,7 +409,7 @@ python winbuild.py monitor --duration 30
 python winbuild.py all --port COM14
 ```
 
-Boards: `t_embed` (default), `esp32s3`, `waveshare_c6`, `s3_supermini`. Override defaults with `ESP_IDF_DIR` and `ESPPORT` env vars. `monitor --reset` only works on USB-UART bridges, not on the ESP32-S3 native USB-Serial/JTAG — use `flash` or `all` to capture boot logs.
+Boards: `t_embed` (default), `esp32s3`, `waveshare_c6`, `s3_supermini`, `s3_supermini_st7565`. Override defaults with `ESP_IDF_DIR` and `ESPPORT` env vars. `monitor --reset` only works on USB-UART bridges, not on the ESP32-S3 native USB-Serial/JTAG — use `flash` or `all` to capture boot logs.
 
 ### Build a FAP
 

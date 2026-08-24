@@ -396,11 +396,23 @@ FuriHalNfcError furi_hal_nfc_init(void) {
 
     furi_delay_ms(150);
 
-    /* Verify PN532 with GetFirmwareVersion */
+    /* Verify PN532 with GetFirmwareVersion.
+     * The PN532 often powers up in a low-power state where the *first* I2C
+     * transaction is expected to fail/timeout — it's what wakes the chip up
+     * (documented behavior, see Adafruit_PN532 / libnfc). Retry a few times
+     * with a short recovery delay instead of giving up on the first miss. */
     uint8_t cmd[] = {PN532_CMD_GETFIRMWAREVERSION};
     uint8_t resp[4];
-    size_t resp_len = sizeof(resp);
-    FuriHalNfcError nfc_err = pn532_send_command(cmd, sizeof(cmd), resp, &resp_len, 2000);
+    size_t resp_len;
+    FuriHalNfcError nfc_err = FuriHalNfcErrorCommunication;
+    const int max_attempts = 4;
+    for(int attempt = 1; attempt <= max_attempts; attempt++) {
+        resp_len = sizeof(resp);
+        nfc_err = pn532_send_command(cmd, sizeof(cmd), resp, &resp_len, 2000);
+        if(nfc_err == FuriHalNfcErrorNone) break;
+        FURI_LOG_W(TAG, "PN532 wake-up attempt %d/%d failed, retrying", attempt, max_attempts);
+        furi_delay_ms(100);
+    }
     if(nfc_err != FuriHalNfcErrorNone) {
         FURI_LOG_E(TAG, "PN532 not found");
         return FuriHalNfcErrorCommunication;

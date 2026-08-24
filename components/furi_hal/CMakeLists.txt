@@ -6,6 +6,9 @@
 #   esp32s3_supermini_ssd1306   - ESP32-S3 Super Mini + SSD1306 128x64 OLED (I2C),
 #                                  6-button input, CC1101 + SD (shared SPI). Needs its
 #                                  own sdkconfig.defaults.<board> — see winbuild.py.
+#   esp32s3_supermini_st7565    - Same board, ST7565 128x64 LCD (SPI, e.g.
+#                                  GMG12864-06D) instead of the SSD1306. Also needs its
+#                                  own sdkconfig.defaults.<board> — see winbuild.py.
 if(NOT DEFINED FLIPPER_BOARD)
     set(FLIPPER_BOARD "waveshare_c6_1.9" CACHE STRING "Target board for Flipper ESP32 port")
 endif()

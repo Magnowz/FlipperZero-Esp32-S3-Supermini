@@ -17,18 +17,21 @@ declare -A TARGETS=(
     ["waveshare_c6"]="esp32c6"
     ["t_embed"]="esp32s3"
     ["s3_supermini"]="esp32s3"
+    ["s3_supermini_st7565"]="esp32s3"
 )
 declare -A NAMES=(
     ["esp32s3"]="esp32s3_generic"
     ["waveshare_c6"]="waveshare_c6_1.9"
     ["t_embed"]="lilygo_t_embed_cc1101"
     ["s3_supermini"]="esp32s3_supermini_ssd1306"
+    ["s3_supermini_st7565"]="esp32s3_supermini_st7565"
 )
 declare -A DIRS=(
     ["esp32s3"]="build_s3"
     ["waveshare_c6"]="build_waveshare_c6"
     ["t_embed"]="build_t_embed"
     ["s3_supermini"]="build_s3_supermini"
+    ["s3_supermini_st7565"]="build_s3_supermini_st7565"
 )
 
 # Boards whose flash/PSRAM config differs from the shared sdkconfig.defaults.<target>
@@ -37,12 +40,13 @@ declare -A DIRS=(
 # chained rather than just relying on the auto-picked target file.
 declare -A SDKCONFIG_OVERRIDES=(
     ["s3_supermini"]="sdkconfig.defaults.esp32s3_supermini_ssd1306"
+    ["s3_supermini_st7565"]="sdkconfig.defaults.esp32s3_supermini_st7565"
 )
 
 usage() {
     cat <<EOF
 Usage: $(basename "$0") --board <name> [options]
-Boards: esp32s3, waveshare_c6, t_embed, s3_supermini
+Boards: esp32s3, waveshare_c6, t_embed, s3_supermini, s3_supermini_st7565
 Options: -p|--port, -m|--monitor, --build-only
 EOF
 }
@@ -85,7 +89,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "${SELECTED_BOARD}" || -z "${NAMES[$SELECTED_BOARD]+x}" ]]; then
-    echo "Error: Valid --board required (esp32s3, waveshare_c6, t_embed, s3_supermini)." >&2
+    echo "Error: Valid --board required (esp32s3, waveshare_c6, t_embed, s3_supermini, s3_supermini_st7565)." >&2
     exit 1
 fi
 

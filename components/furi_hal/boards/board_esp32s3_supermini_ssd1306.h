@@ -10,7 +10,10 @@
  *           now (reserved for game controls, e.g. Doom/Flappy Bird)
  * SubGHz:   CC1101 via SPI (shared bus with SD card, CS-muxed)
  * SD Card:  SPI (shared bus with CC1101)
- * NFC/IR/NRF24/Speaker/Mic/RGB: not wired on this board
+ * NFC:      PN532 via I2C, sharing the OLED's bus (SDA=8/SCL=9) — optional,
+ *           user-wired; no IRQ/RST pins used (see furi_hal_nfc.c)
+ * IR:       TX-only breakout on GPIO44 — optional, user-wired; no receiver
+ * NRF24/Speaker/Mic/RGB: not wired on this board
  *
  * NOTE: 4MB flash is tight for this firmware's full app set. If the build
  * overflows the partition, trim more apps in fam_config.py (WiFi/BLE are
@@ -82,13 +85,18 @@
 #define BOARD_PIN_CC1101_GDO2   UINT16_MAX  /* not wired */
 #define BOARD_CC1101_SPI_SHARED 1           /* CC1101 shares SPI2_HOST with SD */
 
-/* ---- NFC / IR — not wired on this board ---- */
-#define BOARD_PIN_NFC_SCL       UINT16_MAX
-#define BOARD_PIN_NFC_SDA       UINT16_MAX
-#define BOARD_PIN_NFC_IRQ       UINT16_MAX
-#define BOARD_PIN_NFC_RST       UINT16_MAX
+/* ---- NFC: PN532 (I2C), sharing the OLED's bus — no dedicated pins needed.
+ * IRQ/RST are intentionally left undefined: furi_hal_nfc.c guards both with
+ * #ifdef and falls back to I2C status-byte polling / skips the RST toggle. */
+#define BOARD_PIN_NFC_SCL       9
+#define BOARD_PIN_NFC_SDA       8
 #define BOARD_NFC_I2C_PORT      I2C_NUM_0
-#define BOARD_PIN_IR_TX         UINT16_MAX
+
+/* ---- IR: TX-only breakout module (GND/VCC/OUT) on GPIO44 ("RX", silkscreened
+ * next to GPIO43 "TX" — both broken out as the UART0 pair). No receiver
+ * wired: BOARD_PIN_IR_RX stays UINT16_MAX, and furi_hal_infrared.c's RX
+ * start now checks for that and fails gracefully instead of aborting. */
+#define BOARD_PIN_IR_TX         44
 #define BOARD_PIN_IR_RX         UINT16_MAX
 
 /* ---- Features ---- */
@@ -99,7 +107,7 @@
 #define BOARD_HAS_RGB_LED       0
 #define BOARD_HAS_VIBRO         0
 #define BOARD_HAS_SPEAKER       0
-#define BOARD_HAS_IR            0
+#define BOARD_HAS_IR            1  /* TX-only, see BOARD_PIN_IR_TX above */
 #define BOARD_HAS_IBUTTON       0
 #define BOARD_HAS_RFID          0
 
@@ -107,7 +115,7 @@
  * Claiming it for USB-OTG (HID, MSC, ...) drops that bridge, so apps should
  * default to BLE instead of grabbing USB unconditionally. */
 #define BOARD_USB_SHARED_WITH_CONSOLE 1
-#define BOARD_HAS_NFC           0
+#define BOARD_HAS_NFC           1  /* PN532 on the shared OLED I2C bus */
 #define BOARD_HAS_SUBGHZ        1  /* Built-in CC1101 */
 #define BOARD_HAS_MIC           0
 

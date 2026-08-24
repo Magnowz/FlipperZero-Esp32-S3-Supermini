@@ -1,0 +1,56 @@
+# Board-specific overrides for the ESP32-S3 Super Mini (ESP32-S3FH4R2: 4MB
+# Flash, 2MB Quad/QSPI PSRAM) — identical chip/flash/PSRAM config to the
+# SSD1306 variant of this board (see sdkconfig.defaults.esp32s3_supermini_ssd1306),
+# only the display driver differs (SPI ST7565 vs I2C SSD1306), which doesn't
+# touch any of these settings. Both boards target IDF_TARGET=esp32s3, so
+# ESP-IDF auto-merges sdkconfig.defaults.esp32s3 for every esp32s3 board —
+# this file must be merged AFTER it to win on the conflicting flash/PSRAM
+# keys below. That's done by explicitly chaining SDKCONFIG_DEFAULTS in
+# winbuild.py:
+#   -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32s3_supermini_st7565"
+# (ESP-IDF appends each list entry's own ".esp32s3" companion right after it,
+# so the merge order ends up: sdkconfig.defaults -> sdkconfig.defaults.esp32s3
+# -> this file, last write wins.)
+#
+# Everything NOT flash/PSRAM-sized (BLE 4.2 advertising, TinyUSB, lwIP/HTTPD
+# tuning, FREERTOS_UNICORE, NFC's 3DES) still comes from sdkconfig.defaults.esp32s3
+# unchanged — no need to duplicate it here.
+
+# Flash: Super Mini has 4MB
+# CONFIG_ESPTOOLPY_FLASHSIZE_16MB is not set
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+
+# Single-app partition table sized for 4MB flash. This firmware's full app
+# set was tuned for 16MB — if the build overflows this partition, trim more
+# apps out of fam_config.py (WiFi + BLE are the biggest) rather than
+# switching to a bigger virtual partition table the real flash can't back.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_singleapp_4mb.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp_4mb.csv"
+
+# PSRAM: ESP32-S3FH4R2 has 2MB Quad (QSPI) PSRAM, not Octal — Octal mode
+# will not train/boot on this chip.
+CONFIG_SPIRAM=y
+# CONFIG_SPIRAM_MODE_OCT is not set
+CONFIG_SPIRAM_MODE_QUAD=y
+# CONFIG_SPIRAM_SPEED_80M is not set
+CONFIG_SPIRAM_SPEED_40M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Only 2MB PSRAM total (vs T-Embed's 8MB) — keep small/DMA/stack allocations
+# in internal RAM so the little PSRAM headroom isn't eaten by fragmentation.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=1024
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=65536
+CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY=y
+# Do NOT enable SPIRAM_FETCH_INSTRUCTIONS/SPIRAM_RODATA here. That XIP-from-
+# PSRAM feature (fine on the T-Embed's spacious 8MB PSRAM) tries to mirror
+# the whole .text+.rodata into the PSRAM cache window — this firmware's
+# ~2.8MB image needs ~2.1MB of that window alone, which doesn't fit in the
+# Super Mini's 2MB PSRAM at all and hard-aborts on every boot:
+#   E (739) mmu_psram: PSRAM space not enough for the Flash instructions
+# With 4MB flash and no such crunch there, code just executes from flash
+# (the normal/default path) and PSRAM is left free for heap (malloc/BLE/WiFi
+# buffers), which is what this board actually needs it for.
+# CONFIG_SPIRAM_FETCH_INSTRUCTIONS is not set
+# CONFIG_SPIRAM_RODATA is not set
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y

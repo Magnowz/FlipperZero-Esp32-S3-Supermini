@@ -9,6 +9,7 @@
 #include "furi_hal_light.h"
 #include "furi_hal_resources.h"
 #include "furi_hal_spi_bus.h"
+#include "furi_hal_spi.h"
 #include "boards/board.h"
 
 #include <string.h>
@@ -185,7 +186,214 @@ uint16_t furi_hal_display_get_bg_color(void) {
     return oled_bg_color;
 }
 
-#else /* !BOARD_DISPLAY_SSD1306_I2C — ST7789/JD9853 color LCD via esp_lcd SPI */
+#elif defined(BOARD_DISPLAY_ST7565_SPI) && BOARD_DISPLAY_ST7565_SPI
+/* ---------------------------------------------------------------------------
+ * ST7565 128x64 mono LCD (e.g. GMG12864-06D COG module) via 4-wire SPI
+ *
+ * Same page-addressed GDDRAM layout as the SSD1306 branch above (8 pages of
+ * 128 bytes, byte[page*128+x] bit n = pixel (x, page*8+n), bit 0 = top pixel
+ * of the tile) — the u8g2 framebuffer maps onto it 1:1, no scaling/color
+ * conversion needed. The wire protocol differs: instead of an I2C control
+ * byte, a dedicated A0 (a.k.a. RS/DC) GPIO line tells the controller whether
+ * the byte going out over MOSI is a command (A0 low) or display data (A0
+ * high) — that line is toggled by hand around each transaction below.
+ *
+ * Unlike a from-scratch SPI bus, this variant is deliberately CS-muxed onto
+ * the *same* SPI2 bus already wired for CC1101/SD (see
+ * board_esp32s3_supermini_st7565.h and furi_hal_spi.c's
+ * furi_hal_spi_bus_handle_lcd_st7565) so the board doesn't need any GPIOs
+ * beyond what the SSD1306 variant of this board already used — SCLK/MOSI are
+ * shared with CC1101, only CS (freed-up ex-OLED SDA pin) and DC (freed-up
+ * ex-OLED SCL pin) are LCD-only. All transfers go through
+ * furi_hal_spi_acquire()/furi_hal_spi_bus_tx()/furi_hal_spi_release(), which
+ * take the same bus mutex CC1101/SD use, so display writes can't interleave
+ * with SubGHz or SD card transactions. There's no dedicated RST pin in this
+ * pinout either — hold the panel's RST line to 3.3V through a pull-up
+ * resistor and let power-on-reset plus the CMD_RESET (0xE2) below bring it
+ * up clean.
+ * --------------------------------------------------------------------------- */
+
+#define LCD_WIDTH  BOARD_LCD_H_RES  /* 128 */
+#define LCD_HEIGHT BOARD_LCD_V_RES  /* 64 */
+#define LCD_PAGES  (LCD_HEIGHT / 8)
+
+#ifndef BOARD_LCD_COL_OFFSET
+#define BOARD_LCD_COL_OFFSET 0
+#endif
+
+static bool st7565_ready = false;
+static uint16_t st7565_fg_color = 0;
+static uint16_t st7565_bg_color = 1;
+
+/* A0/DC low = command byte, A0/DC high = display data. Acquires the shared
+ * SPI2 bus mutex for the duration of the transfer so CC1101/SD transactions
+ * can't land mid-frame. */
+static void st7565_write(bool is_data, const uint8_t* buf, size_t len) {
+    if(gpio_lcd_dc.pin == UINT16_MAX || len == 0) return;
+    gpio_set_level((gpio_num_t)gpio_lcd_dc.pin, is_data ? 1 : 0);
+    furi_hal_spi_acquire(&furi_hal_spi_bus_handle_lcd_st7565);
+    furi_hal_spi_bus_tx(&furi_hal_spi_bus_handle_lcd_st7565, buf, len, 100);
+    furi_hal_spi_release(&furi_hal_spi_bus_handle_lcd_st7565);
+}
+
+/* ST7565 commands are always single bytes (unlike ST7789's command+param
+ * framing), so every command gets its own tiny transaction — mirrors the
+ * SSD1306 branch's per-byte oled_cmd() above, just over SPI instead of I2C. */
+static void st7565_cmd(uint8_t cmd) {
+    st7565_write(false, &cmd, 1);
+}
+
+/* Set page/column cursor and write one page's worth of pixel data as a
+ * single bus acquisition (3 command bytes + 1 data burst), instead of the
+ * 4 separate acquire/release round-trips a per-byte st7565_cmd()/data-write
+ * pair would cost per page. */
+static void st7565_write_page(uint8_t page, const uint8_t* row, size_t len) {
+    if(gpio_lcd_dc.pin == UINT16_MAX) return;
+
+    uint8_t cursor_cmds[3] = {
+        (uint8_t)(0xB0 + page),
+        (uint8_t)(0x10 | ((BOARD_LCD_COL_OFFSET >> 4) & 0x0F)),
+        (uint8_t)(0x00 | (BOARD_LCD_COL_OFFSET & 0x0F)),
+    };
+
+    furi_hal_spi_acquire(&furi_hal_spi_bus_handle_lcd_st7565);
+    gpio_set_level((gpio_num_t)gpio_lcd_dc.pin, 0);
+    furi_hal_spi_bus_tx(&furi_hal_spi_bus_handle_lcd_st7565, cursor_cmds, sizeof(cursor_cmds), 100);
+    gpio_set_level((gpio_num_t)gpio_lcd_dc.pin, 1);
+    furi_hal_spi_bus_tx(&furi_hal_spi_bus_handle_lcd_st7565, row, len, 100);
+    furi_hal_spi_release(&furi_hal_spi_bus_handle_lcd_st7565);
+}
+
+void furi_hal_display_init(void) {
+    ESP_LOGI(TAG, "Initializing ST7565 LCD (shared SPI2 bus) for %s", BOARD_NAME);
+
+    if(gpio_lcd_dc.pin != UINT16_MAX) {
+        gpio_config_t dc_cfg = {
+            .mode = GPIO_MODE_OUTPUT,
+            .pin_bit_mask = 1ULL << gpio_lcd_dc.pin,
+        };
+        gpio_config(&dc_cfg);
+    }
+
+    /* No dedicated RST pin on this pinout (tied to 3.3V through a resistor
+     * on the board) — give the panel a generous power-on settle delay, then
+     * lean on the CMD_RESET (0xE2) software reset below instead of a GPIO
+     * pulse. If a board variant *does* wire RST to a GPIO, pulse it here. */
+    vTaskDelay(pdMS_TO_TICKS(50));
+    if(gpio_lcd_rst.pin != UINT16_MAX) {
+        gpio_config_t rst_cfg = {
+            .mode = GPIO_MODE_OUTPUT,
+            .pin_bit_mask = 1ULL << gpio_lcd_rst.pin,
+        };
+        gpio_config(&rst_cfg);
+        gpio_set_level((gpio_num_t)gpio_lcd_rst.pin, 1);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        gpio_set_level((gpio_num_t)gpio_lcd_rst.pin, 0);
+        vTaskDelay(pdMS_TO_TICKS(20));
+        gpio_set_level((gpio_num_t)gpio_lcd_rst.pin, 1);
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+
+    st7565_cmd(0xE2); /* Software reset (internal reset cycle) */
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    /* Standard ST7565-family init sequence — matches most 128x64 "12864" COG
+     * modules (DOGM128/ERC12864/GMG12864-06D and clones). If the screen
+     * stays blank, shows a checkerboard, or is mirrored, try flipping
+     * CMD_SET_BIAS (0xA2<->0xA3) or ADC/COM direction (0xA0<->0xA1,
+     * 0xC0<->0xC8) below — these vary by panel vendor/batch even on
+     * otherwise-identical glass. */
+    st7565_cmd(0xA2);       /* Bias 1/9 */
+    st7565_cmd(0xA0);       /* ADC select: normal (SEG0 = column 0) */
+    st7565_cmd(0xC8);       /* COM output scan direction: reversed */
+    st7565_cmd(0x40);       /* Display start line = 0 */
+
+    st7565_cmd(0x28 | 0x4); /* Power control: booster circuit on */
+    vTaskDelay(pdMS_TO_TICKS(50));
+    st7565_cmd(0x28 | 0x6); /* + voltage regulator circuit on */
+    vTaskDelay(pdMS_TO_TICKS(50));
+    st7565_cmd(0x28 | 0x7); /* + voltage follower circuit on (full power) */
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    st7565_cmd(0x20 | 0x6);  /* Regulator resistor ratio */
+    st7565_cmd(0x81);        /* Electronic volume (contrast) mode set */
+    st7565_cmd(0x18);        /* Contrast value (0-63) — tweak if too light/dark */
+
+    st7565_cmd(0xA4);       /* Display all points normal (not all-on) */
+    st7565_cmd(0xA6);       /* Normal display (not inverted) */
+    st7565_cmd(0xAF);       /* Display on */
+
+    st7565_ready = true;
+
+    /* Clear GDDRAM so the panel doesn't show stale/random contents before
+     * the first real frame is committed. */
+    uint8_t zero_row[LCD_WIDTH] = {0};
+    for(uint8_t page = 0; page < LCD_PAGES; page++) {
+        st7565_write_page(page, zero_row, sizeof(zero_row));
+    }
+
+    ESP_LOGI(
+        TAG, "ST7565 initialized (%dx%d, shared SCLK/MOSI, CS=%d DC=%d)",
+        LCD_WIDTH, LCD_HEIGHT, gpio_lcd_cs.pin, gpio_lcd_dc.pin);
+}
+
+void furi_hal_display_commit(const uint8_t* data, uint32_t size) {
+    UNUSED(size);
+    if(!st7565_ready || !data) return;
+
+    for(uint8_t page = 0; page < LCD_PAGES; page++) {
+        st7565_write_page(page, &data[page * LCD_WIDTH], LCD_WIDTH);
+    }
+}
+
+void furi_hal_display_set_backlight(uint8_t brightness) {
+    /* Reflective glass, no backlight wired on this module — map
+     * "brightness" onto the ST7565's own contrast register instead, so the
+     * settings slider still does something visible. */
+    if(!st7565_ready) return;
+    st7565_cmd(0x81);
+    st7565_cmd(brightness >> 2); /* 0-255 -> 0-63 */
+}
+
+void furi_hal_display_sleep(void) {
+    if(!st7565_ready) return;
+    st7565_cmd(0xAE); /* Display off — cuts panel current, GDDRAM retained */
+}
+
+uint16_t furi_hal_display_get_h_res(void) {
+    return LCD_WIDTH;
+}
+
+uint16_t furi_hal_display_get_v_res(void) {
+    return LCD_HEIGHT;
+}
+
+esp_lcd_panel_handle_t furi_hal_display_get_panel_handle(void) {
+    /* No esp_lcd panel on a raw-driven ST7565 — full-screen takeover apps
+     * (Doom/Wolf3D) already null-check this and bail out cleanly. */
+    return NULL;
+}
+
+/* Mono display: fg/bg "color" is meaningless, but keep the setters/getters
+ * as harmless stubs so the UI-color settings screen doesn't need a
+ * board-specific stub of its own. */
+void furi_hal_display_set_fg_color(uint16_t color) {
+    st7565_fg_color = color;
+}
+
+uint16_t furi_hal_display_get_fg_color(void) {
+    return st7565_fg_color;
+}
+
+void furi_hal_display_set_bg_color(uint16_t color) {
+    st7565_bg_color = color;
+}
+
+uint16_t furi_hal_display_get_bg_color(void) {
+    return st7565_bg_color;
+}
+
+#else /* !BOARD_DISPLAY_SSD1306_I2C, !BOARD_DISPLAY_ST7565_SPI — ST7789/JD9853 color LCD via esp_lcd SPI */
 
 /* Display dimensions from board config */
 #define LCD_H_RES BOARD_LCD_H_RES
@@ -560,4 +768,4 @@ uint16_t furi_hal_display_get_bg_color(void) {
     return bg_color;
 }
 
-#endif /* BOARD_DISPLAY_SSD1306_I2C */
+#endif /* BOARD_DISPLAY_SSD1306_I2C / BOARD_DISPLAY_ST7565_SPI */

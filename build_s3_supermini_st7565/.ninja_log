@@ -1,0 +1,36 @@
+# ninja log v6
+817	888	8085014049350929	project_elf_src_esp32s3.c	16d56b6933c3356c
+817	888	8085014049350929	C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/project_elf_src_esp32s3.c	16d56b6933c3356c
+758	942	8085014049886947	esp-idf/esp_system/ld/memory.ld	a34c0bc78212ec4c
+758	942	8085014049886947	C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/esp_system/ld/memory.ld	a34c0bc78212ec4c
+771	955	8085014050002080	esp-idf/esp_system/ld/sections.ld.in	1e9e189b8a13da63
+771	955	8085014050002080	C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/esp_system/ld/sections.ld.in	1e9e189b8a13da63
+782	1701	8085014050255720	partition_table/partition-table.bin	ac3ff58cda69862e
+782	1701	8085014050255720	C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/partition_table/partition-table.bin	ac3ff58cda69862e
+964	2304	8085014050198002	esp-idf/esp_psram/CMakeFiles/__idf_esp_psram.dir/mmu_psram_flash.c.obj	a1ef6252ac6bb874
+1124	2345	8085014051809800	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_utils.c.obj	346ebb7a5310eb6c
+1109	2481	8085014051659380	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_header.c.obj	82a77c7808399b08
+974	3036	8085014050305736	esp-idf/esp_psram/CMakeFiles/__idf_esp_psram.dir/device/esp_psram_impl_ap_quad.c.obj	40ccf1f047546d9b
+956	3930	8085014050122887	esp-idf/esp_psram/CMakeFiles/__idf_esp_psram.dir/esp_psram.c.obj	ddc348886a260cfc
+1070	4414	8085014051268635	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/util/ctrl_sock.c.obj	b94de43b749701c1
+1057	4621	8085014051128191	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_ws.c.obj	9c8bd74b75e0cd45
+1044	4641	8085014051013010	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_uri.c.obj	dfc3f548d341feb2
+1096	4882	8085014051529029	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_auth.c.obj	2ff4a19f73c0f0e1
+1018	5073	8085014050747379	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_sess.c.obj	c096f6740376d980
+793	5102	8085014090758513	esp-idf/main/generated/fam_runtime_root/.assets.stamp	ed05e68dabc00a5d
+793	5102	8085014090758513	C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/.assets.stamp	ed05e68dabc00a5d
+3931	5236	8085014079872158	esp-idf/esp_psram/libesp_psram.a	5f8ff95e90086060
+2346	5250	8085014064029075	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_socks_proxy.c.obj	41059eabbd8998a9
+1031	5371	8085014050877815	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_txrx.c.obj	686a99c42bdaa01
+983	5385	8085014050400862	esp-idf/esp_https_ota/CMakeFiles/__idf_esp_https_ota.dir/src/esp_https_ota.c.obj	e5d836ef8d800d68
+994	5522	8085014050505993	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_main.c.obj	5197c815c45ebc29
+1006	5555	8085014050616294	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_parse.c.obj	d871a4021b5896cd
+2305	5727	8085014063623111	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_internal.c.obj	8bebbb0cdc4a9194
+4882	5934	8085014089394558	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/port/xtensa/gdbstub-entry.S.obj	2679a35b980006b
+5386	5978	8085014094425017	esp-idf/esp_https_ota/libesp_https_ota.a	334622c16ab49064
+1137	6120	8085014051940065	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport.c.obj	fa9c67753013c4f1
+5074	6326	8085014091305730	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/port/xtensa/xt_debugexception.S.obj	74461c25e86dd081
+1701	6432	8085014057574748	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_ssl.c.obj	ca3f740c49a0a731
+3037	6479	8085014070930503	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/gdbstub.c.obj	5c8276c2366b3403
+4415	6726	8085014084717411	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/gdbstub_transport.c.obj	99090a24acd6532b
+4621	6739	8085014086782716	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/packet.c.obj	d97eae895ca202ae

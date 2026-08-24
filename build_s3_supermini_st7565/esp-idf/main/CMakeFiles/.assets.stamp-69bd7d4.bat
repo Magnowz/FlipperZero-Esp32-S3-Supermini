@@ -1,0 +1,27 @@
+@echo off
+cd /D "C:\Users\magno\Documents\Projetos Esp32\Flipper\build_s3_supermini_st7565\esp-idf\main" || (set FAIL_LINE=2& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E remove_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root" || (set FAIL_LINE=3& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets" || (set FAIL_LINE=4& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/example_apps_assets" || (set FAIL_LINE=5& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/examples/example_apps_assets/files" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/example_apps_assets" || (set FAIL_LINE=6& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/subghz" || (set FAIL_LINE=7& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/subghz/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/subghz" || (set FAIL_LINE=8& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/js_app" || (set FAIL_LINE=9& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/system/js_app/examples" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/js_app" || (set FAIL_LINE=10& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/lfrfid" || (set FAIL_LINE=11& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/lfrfid/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/lfrfid" || (set FAIL_LINE=12& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/nfc" || (set FAIL_LINE=13& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/nfc/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/nfc" || (set FAIL_LINE=14& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/infrared" || (set FAIL_LINE=15& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/infrared/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/infrared" || (set FAIL_LINE=16& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/bad_usb" || (set FAIL_LINE=17& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/bad_usb/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/bad_usb" || (set FAIL_LINE=18& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E make_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/clock" || (set FAIL_LINE=19& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E copy_directory "C:/Users/magno/Documents/Projetos Esp32/Flipper/applications/main/clock_app/resources" "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/ext/apps_assets/clock" || (set FAIL_LINE=20& goto :ABORT)
+C:\Espressif\tools\cmake\3.30.2\bin\cmake.exe -E touch "C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/esp-idf/main/generated/fam_runtime_root/.assets.stamp" || (set FAIL_LINE=21& goto :ABORT)
+goto :EOF
+
+:ABORT
+set ERROR_CODE=%ERRORLEVEL%
+echo Batch file failed at line %FAIL_LINE% with errorcode %ERRORLEVEL%
+exit /b %ERROR_CODE%

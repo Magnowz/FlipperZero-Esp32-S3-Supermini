@@ -6,7 +6,12 @@
 #include <storage/storage.h>
 #include <lib/subghz/types.h>
 
-#define SUBGHZ_LAST_SETTING_FREQUENCY_ANALYZER_TRIGGER        (-93.0f)
+/* -93 dBm (stock default) sits close to the noise floor of cheap CC1101
+ * modules and triggers false hits from board self-noise (e.g. the SD card
+ * sharing the CC1101 SPI bus on boards where BOARD_CC1101_SPI_SHARED=1).
+ * -80 dBm still catches real remotes (which arrive much stronger) while
+ * ignoring weak/borderline noise. */
+#define SUBGHZ_LAST_SETTING_FREQUENCY_ANALYZER_TRIGGER        (-80.0f)
 // 1 = "AM650"
 // "AM270", "AM650", "FM238", "FM12K", "FM476",
 #define SUBGHZ_LAST_SETTING_DEFAULT_PRESET                    1

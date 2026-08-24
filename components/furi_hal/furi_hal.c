@@ -35,6 +35,19 @@ void furi_hal_init_early(void) {
     ESP_LOGI(TAG, "NRF24_CE GPIO%d set LOW (standby)", BOARD_PIN_NRF24_CE);
 #endif
 
+#if defined(BOARD_CC1101_SPI_SHARED) && BOARD_CC1101_SPI_SHARED && defined(BOARD_PIN_SD_CS)
+    /* Same class of bug as the NRF24 case above, different peer: the SD card
+     * shares this SPI bus with CC1101, but its CS pin isn't claimed until the
+     * Storage service starts — long after CC1101 is configured. Until then
+     * SD_CS floats, and the SD card can spuriously respond to CC1101 traffic,
+     * corrupting the bus (same symptom: a stuck ~312 MHz Frequency Analyzer
+     * reading). Deselect it here, before any CC1101 SPI traffic. */
+    static const GpioPin sd_cs = {.port = NULL, .pin = BOARD_PIN_SD_CS};
+    furi_hal_gpio_init_simple(&sd_cs, GpioModeOutputPushPull);
+    furi_hal_gpio_write(&sd_cs, true);
+    ESP_LOGI(TAG, "SD_CS GPIO%d set HIGH (deselect)", BOARD_PIN_SD_CS);
+#endif
+
     ESP_LOGI(TAG, "Early init complete");
 }
 

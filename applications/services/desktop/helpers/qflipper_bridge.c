@@ -21,6 +21,9 @@
 #include <furi_hal_usb.h>
 #include <furi_hal_usb_cdc.h>
 #include <rpc/rpc.h>
+#include <storage/storage.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -42,6 +45,38 @@
  * the FIFO read in usb_rpc_drain_rx — fewer iterations, fewer chances for
  * the host to slip a byte into the FIFO that we'd then drop. */
 #define USB_RPC_RX_CHUNK_SIZE 2048
+
+/* The console (and any live `winbuild.py monitor` session) goes dark the
+ * moment the USB-OTG composite takes over the shared port, so FURI_LOG
+ * output during a qFlipper connection attempt is invisible over USB. Storage
+ * (SD card) is unaffected, so mirror the key handshake events to a plain
+ * text file instead — read it back afterward via the Archive app or SD
+ * reader. */
+#define QFLIPPER_DEBUG_LOG_PATH EXT_PATH("qflipper_debug.log")
+
+#if QFLIPPER_HAVE_COMPOSITE
+static void qflipper_debug_log(const char* fmt, ...) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    File* file = storage_file_alloc(storage);
+
+    if(storage_file_open(file, QFLIPPER_DEBUG_LOG_PATH, FSAM_WRITE, FSOM_OPEN_APPEND)) {
+        char line[160];
+        va_list args;
+        va_start(args, fmt);
+        int len = vsnprintf(line, sizeof(line) - 2, fmt, args);
+        va_end(args);
+        if(len > 0) {
+            size_t n = (size_t)len < sizeof(line) - 2 ? (size_t)len : sizeof(line) - 2;
+            line[n] = '\n';
+            storage_file_write(file, line, n + 1);
+        }
+    }
+
+    storage_file_close(file);
+    storage_file_free(file);
+    furi_record_close(RECORD_STORAGE);
+}
+#endif /* QFLIPPER_HAVE_COMPOSITE */
 
 /* Internal events */
 typedef enum {
@@ -106,7 +141,19 @@ static void usb_rpc_cdc_state(void* ctx, CdcState state) {
 
 static void usb_rpc_cdc_ctrl_line(void* ctx, CdcCtrlLine ctrl) {
     UsbRpcSrv* srv = ctx;
-    if(ctrl & CdcCtrlLineDTR) {
+    qflipper_debug_log(
+        "ctrl_line: raw=0x%02x dtr=%d rts=%d",
+        (unsigned)ctrl,
+        (ctrl & CdcCtrlLineDTR) ? 1 : 0,
+        (ctrl & CdcCtrlLineRTS) ? 1 : 0);
+    /* Host serial libraries commonly wiggle DTR/RTS independently while
+     * opening a port (e.g. DTR=1,RTS=0 immediately followed by DTR=0,RTS=1) —
+     * that's control-line housekeeping, not a hangup. Treating any DTR-clear
+     * as a full disconnect tore down the CLI/RPC session right as qFlipper
+     * was about to send "start_rpc_session". Only disconnect when the host
+     * has released BOTH lines (truly closed the port); either line still
+     * asserted means it's still there. */
+    if(ctrl != 0) {
         usb_rpc_post_event(srv, UsbRpcEventConnected);
     } else {
         usb_rpc_post_event(srv, UsbRpcEventDisconnected);
@@ -145,12 +192,14 @@ static void usb_rpc_session_open(UsbRpcSrv* srv) {
     srv->session = rpc_session_open(srv->rpc, RpcOwnerUsb);
     if(!srv->session) {
         FURI_LOG_E(TAG, "rpc_session_open failed");
+        qflipper_debug_log("rpc_session_open FAILED");
         return;
     }
     rpc_session_set_context(srv->session, srv);
     rpc_session_set_send_bytes_callback(srv->session, usb_rpc_send_bytes);
     srv->session_open = true;
     FURI_LOG_I(TAG, "RPC session opened");
+    qflipper_debug_log("rpc_session_open OK");
 }
 
 static void usb_rpc_session_close(UsbRpcSrv* srv) {
@@ -206,21 +255,35 @@ static void usb_rpc_drain_rx(UsbRpcSrv* srv) {
 #define QFLIPPER_RPC_COMMAND "start_rpc_session"
 
 static void qflipper_cli_send_prompt(void) {
+    uint32_t start = furi_get_tick();
+    qflipper_debug_log("send_prompt: calling furi_hal_cdc_send len=%u", (unsigned)strlen(QFLIPPER_CLI_PROMPT));
     furi_hal_cdc_send(
         USB_RPC_CDC_ITF, (uint8_t*)QFLIPPER_CLI_PROMPT, strlen(QFLIPPER_CLI_PROMPT));
+    qflipper_debug_log("send_prompt: returned after %ums", (unsigned)(furi_get_tick() - start));
 }
 
 static void qflipper_cli_rx(UsbRpcSrv* srv) {
     uint8_t buf[64];
     int32_t got;
     while((got = furi_hal_cdc_receive(USB_RPC_CDC_ITF, buf, sizeof(buf))) > 0) {
+        char printable[65];
+        int32_t p = 0;
+        for(; p < got && p < 64; p++) {
+            uint8_t b = buf[p];
+            printable[p] = (b >= 0x20 && b < 0x7f) ? (char)b : '.';
+        }
+        printable[p] = '\0';
+        qflipper_debug_log("cli_rx: got=%ld bytes='%s'", (long)got, printable);
+
         for(int32_t i = 0; i < got; i++) {
             char c = (char)buf[i];
 
             if(c == '\r' || c == '\n') {
                 srv->cli_buf[srv->cli_len] = '\0';
+                qflipper_debug_log("cli_rx: line='%s'", srv->cli_buf);
 
                 if(strstr(srv->cli_buf, QFLIPPER_RPC_COMMAND) != NULL) {
+                    qflipper_debug_log("cli_rx: matched start_rpc_session, switching to RPC");
                     furi_hal_cdc_send(
                         USB_RPC_CDC_ITF,
                         (uint8_t*)(QFLIPPER_RPC_COMMAND "\r\n"),
@@ -250,10 +313,27 @@ static void qflipper_cli_rx(UsbRpcSrv* srv) {
  * Bridge thread
  * ───────────────────────────────────────────────────────────────────── */
 
+/* How often to re-send the CLI prompt while connected but not yet in RPC
+ * mode. The very first prompt (sent immediately on DTR-up) can land before
+ * the host's read side is actually ready to receive — a known race with some
+ * CDC-ACM host stacks — silently dropping that one packet. Re-announcing
+ * periodically means the host picks it up on whichever attempt it's ready
+ * for, instead of the session dying silently after one lost packet. */
+#define QFLIPPER_PROMPT_RESEND_MS 1000
+
 static void qflipper_bridge_run(UsbRpcSrv* srv) {
     UsbRpcEvent ev;
     while(true) {
-        if(furi_message_queue_get(srv->event_q, &ev, FuriWaitForever) != FuriStatusOk) {
+        FuriStatus status =
+            furi_message_queue_get(srv->event_q, &ev, QFLIPPER_PROMPT_RESEND_MS);
+        if(status == FuriStatusErrorTimeout) {
+            if(srv->connected && !srv->rpc_mode) {
+                qflipper_debug_log("resend: periodic CLI prompt re-announce");
+                qflipper_cli_send_prompt();
+            }
+            continue;
+        }
+        if(status != FuriStatusOk) {
             continue;
         }
 
@@ -262,20 +342,28 @@ static void qflipper_bridge_run(UsbRpcSrv* srv) {
             return;
 
         case UsbRpcEventConnected:
-            if(srv->connected) break;
+            if(srv->connected) {
+                qflipper_debug_log("event=Connected (already connected, ignored)");
+                break;
+            }
             srv->connected = true;
             srv->rpc_mode = false;
             srv->cli_len = 0;
             FURI_LOG_I(TAG, "DTR up — entering CLI, sending prompt");
+            qflipper_debug_log("event=Connected: sending CLI prompt");
             qflipper_cli_send_prompt();
             break;
 
         case UsbRpcEventDisconnected:
-            if(!srv->connected) break;
+            if(!srv->connected) {
+                qflipper_debug_log("event=Disconnected (not connected, ignored)");
+                break;
+            }
             srv->connected = false;
             srv->rpc_mode = false;
             srv->cli_len = 0;
             FURI_LOG_I(TAG, "DTR down — closing RPC session");
+            qflipper_debug_log("event=Disconnected: closing RPC session");
             usb_rpc_session_close(srv);
             break;
 
@@ -315,6 +403,8 @@ bool qflipper_bridge_start(void) {
 #else
     if(s_bridge) return true; /* already active */
 
+    qflipper_debug_log("=== qflipper_bridge_start() ===");
+
     UsbRpcSrv* srv = malloc(sizeof(UsbRpcSrv));
     srv->event_q = furi_message_queue_alloc(16, sizeof(UsbRpcEvent));
     srv->session = NULL;
@@ -330,20 +420,24 @@ bool qflipper_bridge_start(void) {
      * another consumer (USB-Storage) already installed it. */
     if(!furi_hal_usb_composite_install(0, 0, NULL, NULL)) {
         FURI_LOG_E(TAG, "composite_install failed");
+        qflipper_debug_log("composite_install FAILED");
         furi_record_close(RECORD_RPC);
         furi_message_queue_free(srv->event_q);
         free(srv);
         return false;
     }
+    qflipper_debug_log("composite_install OK");
 
     /* set_callbacks fires state/ctrl_line immediately with the current line
      * state, so if DTR is already high this seeds a Connected event into the
      * queue (drained once the thread starts). */
     furi_hal_cdc_set_callbacks(USB_RPC_CDC_ITF, &usb_rpc_cdc_callbacks, srv);
+    qflipper_debug_log("cdc_set_callbacks done, ctrl_line_state=0x%02x", (unsigned)furi_hal_cdc_get_ctrl_line_state(USB_RPC_CDC_ITF));
 
     srv->thread = furi_thread_alloc_ex("QflipperBridge", 8192, qflipper_bridge_thread, srv);
     s_bridge = srv;
     furi_thread_start(srv->thread);
+    qflipper_debug_log("bridge thread started");
 
     return true;
 #endif

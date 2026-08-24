@@ -88,6 +88,27 @@ FuriHalSpiBusHandle furi_hal_spi_bus_handle_nrf24 = {
     .mode = 0,
 };
 
+/* ESP32-S3 Super Mini + ST7565 board: the LCD is CS-muxed onto the same
+ * SubGhz/CC1101/SD SPI2 bus too (see board_esp32s3_supermini_st7565.h) --
+ * same idea as NRF24 above, own CS (gpio_lcd_cs), shared SCLK/MOSI/MISO.
+ * Whichever handle on this bus is acquired first runs the one real
+ * spi_bus_initialize() (see furi_hal_spi_bus_init_if_needed below); every
+ * other handle just adds its own CS-selected device afterwards. Unused by
+ * boards where BOARD_DISPLAY_ST7565_SPI isn't set -- gpio_lcd_cs then still
+ * resolves to a valid extern (either a real board pin or UINT16_MAX), so
+ * this definition is harmless dead weight there. */
+FuriHalSpiBusHandle furi_hal_spi_bus_handle_lcd_st7565 = {
+    .bus = &furi_hal_spi_bus_subghz,
+    .miso = &gpio_ext_pa6,
+    .mosi = &gpio_ext_pa7,
+    .sck = &gpio_ext_pb3,
+    .cs = &gpio_lcd_cs,
+    .device = NULL,
+    .initialized = false,
+    .frequency_hz = 1 * 1000 * 1000,
+    .mode = 0,
+};
+
 static bool furi_hal_spi_pin_valid(const GpioPin* pin) {
     return pin && pin->pin != FURI_HAL_SPI_PIN_UNMAPPED;
 }

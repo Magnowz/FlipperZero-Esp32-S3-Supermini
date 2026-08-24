@@ -172,6 +172,12 @@ void furi_hal_infrared_async_rx_start(void) {
     FURI_LOG_E("IR", "Board has no IR support");
     return;
 #endif
+    if(IR_RX_GPIO == UINT16_MAX) {
+        /* TX-only board wiring (no receiver pin defined) — fail gracefully
+         * instead of letting rmt_new_rx_channel's ESP_ERROR_CHECK abort. */
+        FURI_LOG_E("IR", "No IR RX pin configured on this board");
+        return;
+    }
 
     /* Configure RMT RX channel */
     rmt_rx_channel_config_t rx_chan_config = {

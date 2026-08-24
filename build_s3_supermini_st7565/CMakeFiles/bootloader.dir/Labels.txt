@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/CMakeFiles/bootloader
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/CMakeFiles/bootloader.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/CMakeFiles/bootloader-complete.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+C:/Users/magno/Documents/Projetos Esp32/Flipper/build_s3_supermini_st7565/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

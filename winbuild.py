@@ -41,6 +41,7 @@ BOARDS = {
     "esp32s3":      ("esp32s3_generic",               "esp32s3", "build_s3"),
     "waveshare_c6": ("waveshare_c6_1.9",               "esp32c6", "build_waveshare_c6"),
     "s3_supermini": ("esp32s3_supermini_ssd1306",      "esp32s3", "build_s3_supermini"),
+    "s3_supermini_st7565": ("esp32s3_supermini_st7565", "esp32s3", "build_s3_supermini_st7565"),
 }
 
 # Boards whose flash/PSRAM config differs from the shared sdkconfig.defaults.<target>
@@ -51,6 +52,7 @@ BOARDS = {
 # first and this file wins afterward on the keys it overrides.
 SDKCONFIG_OVERRIDES = {
     "s3_supermini": "sdkconfig.defaults.esp32s3_supermini_ssd1306",
+    "s3_supermini_st7565": "sdkconfig.defaults.esp32s3_supermini_st7565",
 }
 
 REPO_ROOT = Path(__file__).resolve().parent
