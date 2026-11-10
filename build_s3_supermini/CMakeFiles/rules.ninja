@@ -2890,6 +2890,16 @@ rule C_COMPILER__esp32_fam_app_nfc_unscanned_
 #############################################
 # Rule for compiling C files.
 
+rule C_COMPILER__esp32_fam_app_desktop_settings_unscanned_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ccache ${LAUNCHER}${CODE_CHECK}C:\Espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for compiling C files.
+
 rule C_COMPILER__esp32_fam_app_dolphin_unscanned_
   depfile = $DEP_FILE
   deps = gcc
@@ -3011,6 +3021,16 @@ rule C_COMPILER__esp32_fam_app_desktop_unscanned_
 # Rule for compiling C files.
 
 rule C_COMPILER__esp32_fam_app_subghz_load_dangerous_settings_unscanned_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ccache ${LAUNCHER}${CODE_CHECK}C:\Espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for compiling C files.
+
+rule C_COMPILER__esp32_fam_app_namechanger_srv_unscanned_
   depfile = $DEP_FILE
   deps = gcc
   command = ccache ${LAUNCHER}${CODE_CHECK}C:\Espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in

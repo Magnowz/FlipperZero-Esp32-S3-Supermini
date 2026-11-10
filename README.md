@@ -130,11 +130,48 @@ Connect your board, click flash, done. After flashing, copy the contents of [`ht
 
 ### ESP32-S3 Super Mini — manual flash
 
-Prebuilt binaries are available in [`release/`](release/) — no build required:
+Prebuilt binaries are available in [`release/`](release/) — choose your preferred flashing method below.
 
-1. Download the three files from [`release/`](release/): [`bootloader.bin`](release/bootloader.bin), [`partition-table.bin`](release/partition-table.bin), [`furi_esp32.bin`](release/furi_esp32.bin). (Prefer to build it yourself instead? See [Building](#building) below — `./build.sh --board s3_supermini` on Linux/macOS, `python winbuild.py build --board s3_supermini` on Windows — which produces the same three files in `build_s3_supermini/`.)
-2. Open **[esptool.spacehuhn.com](https://esptool.spacehuhn.com/)** in Chrome or Edge and click **Connect** — select your board's USB serial port.
-3. Add each file below at its matching offset (the tool lets you queue multiple file/offset pairs before flashing):
+#### ✅ Option 1: Single Unified Firmware (Easiest — Recommended)
+
+**Download**: [`full_firmware.bin`](release/full_firmware.bin) (2.88 MB)
+
+**Via Web Flasher** (easiest):
+1. Open **[esptool.spacehuhn.com](https://esptool.spacehuhn.com/)** in Chrome or Edge
+2. Click **Connect** and select your board's USB serial port
+3. Add file:
+   - File: `full_firmware.bin` at offset `0x0`
+4. Flash settings: mode `DIO`, frequency `80MHz`, size `4MB` (auto-detected)
+5. Click **Program** and wait for completion
+
+**Via esptool.py** (command line):
+```bash
+esptool.py -p COM14 write_flash 0x0 full_firmware.bin
+```
+
+**Via Batch (Windows)**:
+```cmd
+merge_and_flash.bat COM14 s3_supermini
+```
+
+**Via PowerShell (Windows)**:
+```powershell
+.\merge_and_flash.ps1 -Port COM14 -Board s3_supermini
+```
+
+---
+
+#### 🔧 Option 2: Three Separate Files (Advanced)
+
+**Download** from [`release/`](release/): 
+- [`bootloader.bin`](release/bootloader.bin)
+- [`partition-table.bin`](release/partition-table.bin)
+- [`furi_esp32.bin`](release/furi_esp32.bin)
+
+**Via Web Flasher**:
+1. Open **[esptool.spacehuhn.com](https://esptool.spacehuhn.com/)** in Chrome or Edge
+2. Click **Connect** and select your board's USB serial port
+3. Queue all three files at their offsets:
 
    | File | Offset |
    |---|---|
@@ -142,9 +179,45 @@ Prebuilt binaries are available in [`release/`](release/) — no build required:
    | `partition-table.bin` | `0x8000` |
    | `furi_esp32.bin` | `0x10000` |
 
-4. Flash settings, if the tool asks instead of auto-detecting: mode `DIO`, frequency `80MHz`, size `4MB`.
-5. Click **Program** and wait for it to finish.
-6. Copy the contents of `sdcard.zip` onto a FAT32 microSD card and insert it — same as any other board.
+4. Flash settings: mode `DIO`, frequency `80MHz`, size `4MB` (auto-detected)
+5. Click **Program** and wait for completion
+
+**Via esptool.py** (command line):
+```bash
+esptool.py -p COM14 write_flash \
+  0x0 bootloader.bin \
+  0x8000 partition-table.bin \
+  0x10000 furi_esp32.bin
+```
+
+---
+
+#### 📝 Post-Flash Setup
+
+After flashing either method:
+
+1. **Copy SD Card Files** (optional but recommended):
+   - Format a microSD card as FAT32
+   - Extract [`sdcard.zip`](sdcard.zip) contents to root of SD card
+   - Insert into board (shared SPI with CC1101)
+
+2. **First Boot**:
+   - Connect via USB to power on (native USB, 3.3V)
+   - Button navigation: `Up`/`Down` for menu, `OK` to select, `Back` to return
+   - NFC app requires optional PN532 module (see [Wiring](#esp32-s3-super-mini--ssd1306-wiring))
+
+---
+
+#### 🔨 Build Locally Instead (Optional)
+
+Prefer to build from source? See [Building](#building) section:
+- Linux/macOS: `./build.sh --board s3_supermini`
+- Windows: `python winbuild.py build --board s3_supermini`
+
+This produces the same binaries in `build_s3_supermini/`, which you can then merge with:
+```bash
+python merge_firmware.py --board s3_supermini
+```
 
 ## Apps
 

@@ -1116,6 +1116,7 @@ G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_lfrfid.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_storage_settings.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_nfc.dir
+G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_desktop_settings.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_dolphin.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_power_start.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_ble_spam.dir
@@ -1129,6 +1130,7 @@ G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_storage.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_desktop.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_subghz_load_dangerous_settings.dir
+G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_app_namechanger_srv.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/esp32_fam_stage_assets.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/edit_cache.dir
 G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/main/CMakeFiles/rebuild_cache.dir

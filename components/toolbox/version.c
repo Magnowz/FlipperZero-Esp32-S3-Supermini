@@ -63,7 +63,7 @@ const char* version_get_custom_name(const Version* v) {
 }
 
 void version_set_custom_name(Version* v, const char* name) {
-    if(!v) return;
+    if(!v) v = (Version*)version_get();
     v->custom_name = name;
 }
 
