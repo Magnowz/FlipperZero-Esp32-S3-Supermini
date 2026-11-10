@@ -1,6 +1,6 @@
 /* Automatically generated file; DO NOT EDIT */
 /* Espressif IoT Development Framework Linker Script */
-/* Generated from: C:\Users\magno\Documents\Projetos Esp32\Flipper-Zero-ESP32-Port\build_s3_supermini\esp-idf\esp_system\ld\sections.ld.in */
+/* Generated from: G:\Projetos Esp32\FlipperZero-Esp32-S3-Supermini\build_s3_supermini\esp-idf\esp_system\ld\sections.ld.in */
 
 /*
 

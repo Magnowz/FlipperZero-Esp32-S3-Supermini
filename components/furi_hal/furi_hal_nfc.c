@@ -214,24 +214,25 @@ static esp_err_t pn532_i2c_init(void) {
 
 /** Wait for PN532 ready: IRQ pin LOW or I2C RDY byte polling */
 static bool pn532_wait_ready(uint32_t timeout_ms) {
-#ifdef BOARD_PIN_NFC_IRQ
     uint32_t start = furi_get_tick();
-    while((furi_get_tick() - start) < timeout_ms) {
-        if(gpio_get_level(BOARD_PIN_NFC_IRQ) == 0) return true;
-        furi_delay_ms(2);
+    if(BOARD_PIN_NFC_IRQ != UINT16_MAX) {
+        /* IRQ line wired: wait for it to go LOW */
+        while((furi_get_tick() - start) < timeout_ms) {
+            if(gpio_get_level(BOARD_PIN_NFC_IRQ) == 0) return true;
+            furi_delay_ms(2);
+        }
+        return false;
+    } else {
+        /* No IRQ pin: poll the PN532 I2C RDY status byte */
+        uint8_t status;
+        while((furi_get_tick() - start) < timeout_ms) {
+            esp_err_t err = i2c_master_read_from_device(
+                BOARD_NFC_I2C_PORT, PN532_I2C_ADDR, &status, 1, pdMS_TO_TICKS(10));
+            if(err == ESP_OK && (status & 0x01)) return true;
+            furi_delay_ms(5);
+        }
+        return false;
     }
-    return false;
-#else
-    uint8_t status;
-    uint32_t start = furi_get_tick();
-    while((furi_get_tick() - start) < timeout_ms) {
-        esp_err_t err = i2c_master_read_from_device(
-            BOARD_NFC_I2C_PORT, PN532_I2C_ADDR, &status, 1, pdMS_TO_TICKS(10));
-        if(err == ESP_OK && (status & 0x01)) return true;
-        furi_delay_ms(5);
-    }
-    return false;
-#endif
 }
 
 /** Read a PN532 I2C response frame.
@@ -367,25 +368,27 @@ FuriHalNfcError furi_hal_nfc_init(void) {
     esp_timer_create(&fwt_args, &fwt_timer);
     esp_timer_create(&btx_args, &block_tx_timer);
 
-    /* Configure IRQ pin */
-#ifdef BOARD_PIN_NFC_IRQ
-    gpio_config_t irq_conf = {
-        .pin_bit_mask = (1ULL << BOARD_PIN_NFC_IRQ),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-    };
-    gpio_config(&irq_conf);
-#endif
+    /* Configure IRQ pin (only if wired; UINT16_MAX means absent -> RDY polling) */
+    uint16_t irq_pin = BOARD_PIN_NFC_IRQ;
+    if(irq_pin != UINT16_MAX) {
+        gpio_config_t irq_conf = {
+            .pin_bit_mask = (1ULL << irq_pin),
+            .mode = GPIO_MODE_INPUT,
+            .pull_up_en = GPIO_PULLUP_ENABLE,
+        };
+        gpio_config(&irq_conf);
+    }
 
-    /* Ensure RST is HIGH (PN532 powered from board power-on) */
-#ifdef BOARD_PIN_NFC_RST
-    gpio_config_t rst_conf = {
-        .pin_bit_mask = (1ULL << BOARD_PIN_NFC_RST),
-        .mode = GPIO_MODE_OUTPUT,
-    };
-    gpio_config(&rst_conf);
-    gpio_set_level(BOARD_PIN_NFC_RST, 1);
-#endif
+    /* Ensure RST is HIGH (only if wired; PN532 red modules self-reset) */
+    uint16_t rst_pin = BOARD_PIN_NFC_RST;
+    if(rst_pin != UINT16_MAX) {
+        gpio_config_t rst_conf = {
+            .pin_bit_mask = (1ULL << rst_pin),
+            .mode = GPIO_MODE_OUTPUT,
+        };
+        gpio_config(&rst_conf);
+        gpio_set_level(rst_pin, 1);
+    }
 
     /* Init I2C (bus likely already initialized by furi_hal_power) */
     esp_err_t err = pn532_i2c_init();
@@ -394,15 +397,24 @@ FuriHalNfcError furi_hal_nfc_init(void) {
         return FuriHalNfcErrorCommunication;
     }
 
-    furi_delay_ms(150);
+    furi_delay_ms(200);
 
-    /* Verify PN532 with GetFirmwareVersion */
+    /* Verify PN532 with GetFirmwareVersion.
+     * Retry several times: on I2C the PN532's first transaction after power-on
+     * is often missed (wake-up latency / clock stretching), so a single probe
+     * can spuriously fail even when the chip is wired correctly. */
     uint8_t cmd[] = {PN532_CMD_GETFIRMWAREVERSION};
     uint8_t resp[4];
-    size_t resp_len = sizeof(resp);
-    FuriHalNfcError nfc_err = pn532_send_command(cmd, sizeof(cmd), resp, &resp_len, 2000);
+    FuriHalNfcError nfc_err = FuriHalNfcErrorCommunication;
+    for(int attempt = 0; attempt < 8; attempt++) {
+        size_t resp_len = sizeof(resp);
+        nfc_err = pn532_send_command(cmd, sizeof(cmd), resp, &resp_len, 1000);
+        if(nfc_err == FuriHalNfcErrorNone) break;
+        FURI_LOG_W(TAG, "PN532 probe attempt %d/8 failed (err=%d), retrying", attempt + 1, nfc_err);
+        furi_delay_ms(100);
+    }
     if(nfc_err != FuriHalNfcErrorNone) {
-        FURI_LOG_E(TAG, "PN532 not found");
+        FURI_LOG_E(TAG, "PN532 not found after 8 attempts");
         return FuriHalNfcErrorCommunication;
     }
 

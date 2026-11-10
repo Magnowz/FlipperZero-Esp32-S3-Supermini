@@ -135,7 +135,7 @@ def cmd_flash(args):
     return run_with_idf_env(
         get_esp_idf_dir(),
         f"-B {build_dir} -DFLIPPER_BOARD={flipper_board}"
-        + _sdkconfig_defaults_arg(args.board) + f" -p {port} flash",
+        + _sdkconfig_defaults_arg(args.board) + f" -p {port} -b 115200 flash",
         {"FLIPPER_BOARD": flipper_board})
 
 

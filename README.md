@@ -41,6 +41,7 @@ Join the [Flipper Zero meets ESP32 - Discord](https://discord.gg/5DnAqFXaBC) for
 | SSD1306 128×64 OLED | Display (I2C) |
 | 6× tactile buttons | Navigation (Up / Down / OK / Back / Left / Right) |
 | MicroSD (optional) | `.sub` / `.key` files under `/subghz` |
+| PN532 module (optional) | 13.56 MHz NFC reader/emulator (I2C) — for the NFC app |
 | Antenna | Matched to the CC1101 band in use (e.g. 433 MHz) |
 
 #### OLED SSD1306 (I2C)
@@ -91,6 +92,33 @@ Left/Right are wired, polled, and debounced exactly like the other four — the 
 | DAT0 | MISO | GPIO5 |
 | DAT3 | CS | GPIO43 (silkscreened "TX") |
 | VCC / GND | — | 3.3V / GND |
+
+#### PN532 NFC (I2C, shared bus with the OLED)
+
+Optional — only needed for the **NFC** app. The PN532 sits on the **same I2C bus as the OLED** (GPIO8/GPIO9); there is no address clash (OLED = `0x3C`, PN532 = `0x24`), so no extra GPIOs are used.
+
+| PN532 | ESP32-S3 Supermini |
+|---|---|
+| VCC | 3.3V (or 5V on the VIN pad — the red board has an onboard regulator) |
+| GND | GND |
+| SDA | GPIO8 (same as OLED SDA) |
+| SCL | GPIO9 (same as OLED SCL) |
+| RSTO / RSTPDN | 3.3V (tie high — the module self-resets) |
+| IRQ | not connected (firmware polls the I2C RDY byte) |
+
+**⚠️ Set the module to I2C mode.** The common red *Elechouse PN532 V3* board selects its interface with two DIP switches (labelled `1` / `SET0` and `2` / `SET1`):
+
+| Mode | Switch 1 (SET0) | Switch 2 (SET1) |
+|---|---|---|
+| **I2C** ✅ | **ON** | **OFF** |
+| SPI | OFF | ON |
+| HSU / UART | OFF | OFF |
+
+Power-cycle the PN532 after changing the switches — it reads the mode only at power-on. On boot the firmware logs `PN532 IC=0x32 FW=x.y ...` when the chip is found, or `PN532 not found` otherwise (check with `s3_supermini.bat monitor COMx`).
+
+Notes:
+- The PN532 is **13.56 MHz (HF/NFC) only** — it does **not** read 125 kHz LF cards (the RFID app).
+- The NFC chip is enabled by `BOARD_HAS_NFC` in [`board_esp32s3_supermini_ssd1306.h`](components/furi_hal/boards/board_esp32s3_supermini_ssd1306.h); the NFC app is included for this board in [`fam_config.py`](fam_config.py).
 
 ## How to Flash
 

@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/esp-idf/newlib/port/cmake_install.cmake")
+  include("G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/newlib/port/cmake_install.cmake")
 endif()
 

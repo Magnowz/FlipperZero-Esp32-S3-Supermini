@@ -110,16 +110,16 @@ const size_t FLIPPER_EXTSETTINGS_APPS_COUNT = COUNT_OF(FLIPPER_EXTSETTINGS_APPS)
 
 const FlipperExternalApplication FLIPPER_EXTERNAL_APPS[] = {
     {.name = "125 kHz RFID", .icon = &A_125khz_14, .path = "lfrfid"},
-    {.name = "Bluetooth", .icon = &A_Plugins_14, .path = "ble_spam"},
     {.name = "WiFi", .icon = &A_Sub1ghz_14, .path = "wlan"},
+    {.name = "Bluetooth", .icon = &A_Plugins_14, .path = "ble_spam"},
     {.name = "Bad USB", .icon = &A_BadUsb_14, .path = "bad_usb"},
     {.name = "Clock", .icon = &A_Clock_14, .path = "clock"},
 };
 const size_t FLIPPER_EXTERNAL_APPS_COUNT = COUNT_OF(FLIPPER_EXTERNAL_APPS);
 
 const FlipperExternalApplication FLIPPER_INTERNAL_EXTERNAL_APPS[] = {
+    {.name = "Example: Apps Assets", .icon = NULL, .path = "example_apps_assets"},
     {.name = "Example: Apps Data", .icon = NULL, .path = "example_apps_data"},
     {.name = "Example: Number Input", .icon = NULL, .path = "example_number_input"},
-    {.name = "Example: Apps Assets", .icon = NULL, .path = "example_apps_assets"},
 };
 const size_t FLIPPER_INTERNAL_EXTERNAL_APPS_COUNT = COUNT_OF(FLIPPER_INTERNAL_EXTERNAL_APPS);

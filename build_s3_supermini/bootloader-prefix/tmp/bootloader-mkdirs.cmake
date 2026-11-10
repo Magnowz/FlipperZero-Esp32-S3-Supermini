@@ -10,18 +10,18 @@ if(NOT EXISTS "C:/Espressif/frameworks/esp-idf-v5.4.1/components/bootloader/subp
   file(MAKE_DIRECTORY "C:/Espressif/frameworks/esp-idf-v5.4.1/components/bootloader/subproject")
 endif()
 file(MAKE_DIRECTORY
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader"
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix"
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/tmp"
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/src/bootloader-stamp"
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/src"
-  "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/src/bootloader-stamp"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/tmp"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/src/bootloader-stamp"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/src"
+  "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()

@@ -1,2 +1,2 @@
-source C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader/gdbinit/symbols
-source C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader/gdbinit/connect
+source G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader/gdbinit/symbols
+source G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader/gdbinit/connect
