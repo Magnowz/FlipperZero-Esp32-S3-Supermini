@@ -568,6 +568,32 @@ target_include_directories(esp32_fam_app_nfc PRIVATE
 )
 list(APPEND ESP32_FAM_PORTED_OBJECT_TARGETS esp32_fam_app_nfc)
 
+add_library(esp32_fam_app_desktop_settings OBJECT
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/desktop_settings_app.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/helpers/pin_code.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_change_name.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_favorite.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_happy_mode.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_name_popup.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_auth.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_disable.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_error.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_menu.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_setup.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_setup_done.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_setup_howto.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_pin_setup_howto2.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/scenes/desktop_settings_scene_start.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/views/desktop_settings_view_pin_setup_howto.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/views/desktop_settings_view_pin_setup_howto2.c"
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings/views/desktop_view_pin_input.c"
+)
+target_include_directories(esp32_fam_app_desktop_settings PRIVATE
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/settings/desktop_settings"
+)
+list(APPEND ESP32_FAM_PORTED_OBJECT_TARGETS esp32_fam_app_desktop_settings)
+
 add_library(esp32_fam_app_dolphin OBJECT
     "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/services/dolphin/dolphin.c"
     "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/services/dolphin/helpers/dolphin_deed.c"
@@ -912,6 +938,14 @@ target_include_directories(esp32_fam_app_subghz_load_dangerous_settings PRIVATE
     "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/main/subghz"
 )
 list(APPEND ESP32_FAM_PORTED_OBJECT_TARGETS esp32_fam_app_subghz_load_dangerous_settings)
+
+add_library(esp32_fam_app_namechanger_srv OBJECT
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/services/namechanger/namechanger.c"
+)
+target_include_directories(esp32_fam_app_namechanger_srv PRIVATE
+    "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/applications/services/namechanger"
+)
+list(APPEND ESP32_FAM_PORTED_OBJECT_TARGETS esp32_fam_app_namechanger_srv)
 
 add_custom_command(
     OUTPUT "${ESP32_FAM_STAGE_ASSETS_STAMP}"

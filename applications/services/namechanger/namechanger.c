@@ -31,16 +31,28 @@ static bool namechanger_init() {
 
     do {
         uint32_t version;
-        if(!flipper_format_file_open_existing(file, NAMECHANGER_PATH)) break;
-        if(!flipper_format_read_header(file, str, &version)) break;
-        if(furi_string_cmp_str(str, NAMECHANGER_HEADER)) break;
-        if(version != NAMECHANGER_VERSION) break;
+        if(!flipper_format_file_open_existing(file, NAMECHANGER_PATH)) {
+            FURI_LOG_W(TAG, "Cannot open %s (sd status %d)", NAMECHANGER_PATH, storage_sd_status(storage));
+            break;
+        }
+        if(!flipper_format_read_header(file, str, &version)) {
+            FURI_LOG_W(TAG, "Missing 'Filetype:'/'Version:' header");
+            break;
+        }
+        if(furi_string_cmp_str(str, NAMECHANGER_HEADER) || version != NAMECHANGER_VERSION) {
+            FURI_LOG_W(TAG, "Bad header '%s' v%lu", furi_string_get_cstr(str), version);
+            break;
+        }
 
-        if(!flipper_format_read_string(file, "Name", str)) break;
-        // Check for size
+        if(!flipper_format_read_string(file, "Name", str)) {
+            FURI_LOG_W(TAG, "Missing 'Name:' key");
+            break;
+        }
         size_t temp_string_size = furi_string_size(str);
-        if(temp_string_size > (size_t)8) break;
-        if(temp_string_size < (size_t)2) break;
+        if(temp_string_size > (size_t)8 || temp_string_size < (size_t)2) {
+            FURI_LOG_W(TAG, "Name must be 2-8 chars, got %u", (unsigned)temp_string_size);
+            break;
+        }
 
         // Check for forbidden characters
         const char* name_ptr = furi_string_get_cstr(str);
@@ -54,7 +66,11 @@ static bool namechanger_init() {
             }
         }
 
-        if(chars_check_failed) break;
+        if(chars_check_failed) {
+            FURI_LOG_W(TAG, "Name has non-alphanumeric chars");
+            break;
+        }
+        FURI_LOG_I(TAG, "Applying custom name '%s'", furi_string_get_cstr(str));
 
         // If all checks was good we can set the name
         version_set_custom_name(NULL, strdup(furi_string_get_cstr(str)));
@@ -82,6 +98,7 @@ int32_t namechanger_on_system_start(void* p) {
           !furi_record_exists(RECORD_STORAGE)) {
         timeout++;
         if(timeout > 250) {
+            FURI_LOG_W(TAG, "Services not ready (cli_vcp/bt/storage), skipping");
             return 0;
         }
         furi_delay_ms(5);

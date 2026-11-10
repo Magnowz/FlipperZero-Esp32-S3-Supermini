@@ -19,6 +19,7 @@ extern int32_t lfrfid_app(void* p);
 extern int32_t notification_srv(void* p);
 extern int32_t storage_settings_app(void* p);
 extern int32_t gui_srv(void* p);
+extern int32_t desktop_settings_app(void* p);
 extern int32_t dialogs_srv(void* p);
 extern int32_t bt_srv(void* p);
 extern int32_t dolphin_srv(void* p);
@@ -39,6 +40,7 @@ extern void power_on_system_start(void);
 extern void locale_on_system_start(void);
 extern void js_app_on_system_start(void);
 extern void subghz_dangerous_freq(void);
+extern void namechanger_on_system_start(void);
 
 const FlipperInternalApplication FLIPPER_SERVICES[] = {
     {.app = input_srv, .name = "InputSrv", .appid = "input", .stack_size = 4096, .icon = NULL, .flags = FlipperInternalApplicationFlagDefault},
@@ -68,6 +70,7 @@ const FlipperInternalOnStartHook FLIPPER_ON_SYSTEM_START[] = {
     locale_on_system_start,
     js_app_on_system_start,
     subghz_dangerous_freq,
+    namechanger_on_system_start,
 };
 const size_t FLIPPER_ON_SYSTEM_START_COUNT = COUNT_OF(FLIPPER_ON_SYSTEM_START);
 
@@ -79,6 +82,7 @@ const FlipperInternalApplication FLIPPER_SYSTEM_APPS[] = {
     {.app = js_app, .name = "JS Runner", .appid = "js_app", .stack_size = 4096, .icon = NULL, .flags = FlipperInternalApplicationFlagDefault},
     {.app = bt_settings_app, .name = "Bluetooth", .appid = "bt_settings", .stack_size = 4096, .icon = &A_Settings_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = lfrfid_app, .name = "125 kHz RFID", .appid = "lfrfid", .stack_size = 4096, .icon = &A_125khz_14, .flags = FlipperInternalApplicationFlagDefault},
+    {.app = desktop_settings_app, .name = "Desktop", .appid = "desktop_settings", .stack_size = 4096, .icon = NULL, .flags = FlipperInternalApplicationFlagDefault},
     {.app = ble_spam_app, .name = "Bluetooth", .appid = "ble_spam", .stack_size = 8192, .icon = &A_Plugins_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = wlan_app, .name = "WiFi", .appid = "wlan", .stack_size = 8192, .icon = &A_Sub1ghz_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = bad_usb_app, .name = "Bad USB", .appid = "bad_usb", .stack_size = 4096, .icon = &A_BadUsb_14, .flags = FlipperInternalApplicationFlagDefault},
@@ -104,6 +108,7 @@ const FlipperInternalApplication FLIPPER_ARCHIVE =     {.app = archive_app, .nam
 const FlipperExternalApplication FLIPPER_EXTSETTINGS_APPS[] = {
     {.name = "About", .icon = &A_Settings_14, .path = "about"},
     {.name = "Bluetooth", .icon = &A_Settings_14, .path = "bt_settings"},
+    {.name = "Desktop", .icon = NULL, .path = "desktop_settings"},
     {.name = "Passport", .icon = NULL, .path = "passport"},
 };
 const size_t FLIPPER_EXTSETTINGS_APPS_COUNT = COUNT_OF(FLIPPER_EXTSETTINGS_APPS);
@@ -118,8 +123,8 @@ const FlipperExternalApplication FLIPPER_EXTERNAL_APPS[] = {
 const size_t FLIPPER_EXTERNAL_APPS_COUNT = COUNT_OF(FLIPPER_EXTERNAL_APPS);
 
 const FlipperExternalApplication FLIPPER_INTERNAL_EXTERNAL_APPS[] = {
+    {.name = "Example: Number Input", .icon = NULL, .path = "example_number_input"},
     {.name = "Example: Apps Assets", .icon = NULL, .path = "example_apps_assets"},
     {.name = "Example: Apps Data", .icon = NULL, .path = "example_apps_data"},
-    {.name = "Example: Number Input", .icon = NULL, .path = "example_number_input"},
 };
 const size_t FLIPPER_INTERNAL_EXTERNAL_APPS_COUNT = COUNT_OF(FLIPPER_INTERNAL_EXTERNAL_APPS);
