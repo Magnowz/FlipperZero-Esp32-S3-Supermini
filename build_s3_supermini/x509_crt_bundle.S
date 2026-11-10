@@ -1,4 +1,4 @@
-/* * Data converted from C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 #if !defined (__APPLE__) && !defined (__linux__)

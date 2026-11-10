@@ -13,8 +13,8 @@ end
 
 # Load bootloader symbols
 set confirm off
-    add-symbol-file C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/bootloader/bootloader.elf
+    add-symbol-file G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/bootloader/bootloader.elf
 set confirm on
 
 # Load application symbols
-file C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/furi_esp32.elf
+file G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/furi_esp32.elf

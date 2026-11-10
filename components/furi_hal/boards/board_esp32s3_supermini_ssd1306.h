@@ -82,9 +82,13 @@
 #define BOARD_PIN_CC1101_GDO2   UINT16_MAX  /* not wired */
 #define BOARD_CC1101_SPI_SHARED 1           /* CC1101 shares SPI2_HOST with SD */
 
-/* ---- NFC / IR — not wired on this board ---- */
-#define BOARD_PIN_NFC_SCL       UINT16_MAX
-#define BOARD_PIN_NFC_SDA       UINT16_MAX
+/* ---- NFC: PN532 em I2C, compartilhando o barramento do OLED ----
+ * SDA/SCL = pinos do OLED (I2C_NUM_0). Sem conflito de endereco:
+ * OLED = 0x3C, PN532 = 0x24. O pn532_i2c_init reusa o bus ja instalado.
+ * IRQ/RST = UINT16_MAX (nao ligados): usa polling por I2C RDY e o reset
+ * interno do modulo (amarre RSTPDN do PN532 em 3V3). */
+#define BOARD_PIN_NFC_SCL       9
+#define BOARD_PIN_NFC_SDA       8
 #define BOARD_PIN_NFC_IRQ       UINT16_MAX
 #define BOARD_PIN_NFC_RST       UINT16_MAX
 #define BOARD_NFC_I2C_PORT      I2C_NUM_0
@@ -102,7 +106,7 @@
 #define BOARD_HAS_IR            0
 #define BOARD_HAS_IBUTTON       0
 #define BOARD_HAS_RFID          0
-#define BOARD_HAS_NFC           0
+#define BOARD_HAS_NFC           1  /* PN532 I2C (shared OLED bus, 0x24) */
 #define BOARD_HAS_SUBGHZ        1  /* Built-in CC1101 */
 #define BOARD_HAS_MIC           0
 

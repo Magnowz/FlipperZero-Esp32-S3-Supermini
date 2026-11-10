@@ -77,7 +77,8 @@ APPS = [
 
 # Boards without NFC / IR hardware – exclude the corresponding apps
 _board = os.environ.get("FLIPPER_BOARD", "")
-_boards_without_nfc = {"waveshare_c6_1.9", "waveshare_c6_1.47", "esp32s3_supermini_ssd1306"}
+# esp32s3_supermini_ssd1306: PN532 via I2C (shared OLED bus) -> NFC incluido
+_boards_without_nfc = {"waveshare_c6_1.9", "waveshare_c6_1.47"}
 _boards_without_ir = {"waveshare_c6_1.9", "waveshare_c6_1.47", "esp32s3_supermini_ssd1306"}
 
 # Wolf3D shares Doom's requirements (PSRAM, ST7789 320xN, I2S speaker).

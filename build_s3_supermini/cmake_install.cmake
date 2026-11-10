@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port
+# Install script for directory: G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/esp-idf/cmake_install.cmake")
+  include("G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/esp-idf/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -57,6 +57,6 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-  file(WRITE "C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/build_s3_supermini/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/build_s3_supermini/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

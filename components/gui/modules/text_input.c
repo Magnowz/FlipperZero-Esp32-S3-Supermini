@@ -347,6 +347,32 @@ static void text_input_view_draw_callback(Canvas* canvas, void* _model) {
 static void text_input_handle_up(TextInput* text_input, TextInputModel* model) {
     UNUSED(text_input);
     if(model->cursor_select) {
+        model->cursor_select = false;
+    } else if(model->selected_row > 0) {
+        model->selected_row--;
+        uint8_t new_row_size = get_row_size(model, model->selected_row);
+        if(model->selected_column >= new_row_size) {
+            model->selected_column = new_row_size - 1;
+        }
+    }
+}
+
+static void text_input_handle_down(TextInput* text_input, TextInputModel* model) {
+    UNUSED(text_input);
+    if(model->cursor_select) {
+        model->cursor_select = false;
+    } else if(model->selected_row < keyboard_row_count - 1) {
+        model->selected_row++;
+        uint8_t new_row_size = get_row_size(model, model->selected_row);
+        if(model->selected_column >= new_row_size) {
+            model->selected_column = new_row_size - 1;
+        }
+    }
+}
+
+static void text_input_handle_left(TextInput* text_input, TextInputModel* model) {
+    UNUSED(text_input);
+    if(model->cursor_select) {
         model->clear_default_text = false;
         if(model->cursor_pos > 0) {
             model->cursor_pos = CLAMP(model->cursor_pos - 1, strlen(model->text_buffer), 0u);
@@ -359,7 +385,7 @@ static void text_input_handle_up(TextInput* text_input, TextInputModel* model) {
     }
 }
 
-static void text_input_handle_down(TextInput* text_input, TextInputModel* model) {
+static void text_input_handle_right(TextInput* text_input, TextInputModel* model) {
     UNUSED(text_input);
     if(model->cursor_select) {
         model->clear_default_text = false;
@@ -369,32 +395,6 @@ static void text_input_handle_down(TextInput* text_input, TextInputModel* model)
     } else {
         model->selected_row = (model->selected_row + 1) % keyboard_row_count;
         model->selected_column = 0;
-    }
-}
-
-static void text_input_handle_left(TextInput* text_input, TextInputModel* model) {
-    UNUSED(text_input);
-    if(model->cursor_select) {
-        model->cursor_select = false;
-    } else if(model->selected_row > 0) {
-        model->selected_row--;
-        uint8_t new_row_size = get_row_size(model, model->selected_row);
-        if(model->selected_column >= new_row_size) {
-            model->selected_column = new_row_size - 1;
-        }
-    }
-}
-
-static void text_input_handle_right(TextInput* text_input, TextInputModel* model) {
-    UNUSED(text_input);
-    if(model->cursor_select) {
-        model->cursor_select = false;
-    } else if(model->selected_row < keyboard_row_count - 1) {
-        model->selected_row++;
-        uint8_t new_row_size = get_row_size(model, model->selected_row);
-        if(model->selected_column >= new_row_size) {
-            model->selected_column = new_row_size - 1;
-        }
     }
 }
 

@@ -19,6 +19,7 @@ extern int32_t lfrfid_app(void* p);
 extern int32_t notification_srv(void* p);
 extern int32_t storage_settings_app(void* p);
 extern int32_t gui_srv(void* p);
+extern int32_t nfc_app(void* p);
 extern int32_t dialogs_srv(void* p);
 extern int32_t bt_srv(void* p);
 extern int32_t dolphin_srv(void* p);
@@ -79,6 +80,7 @@ const FlipperInternalApplication FLIPPER_SYSTEM_APPS[] = {
     {.app = js_app, .name = "JS Runner", .appid = "js_app", .stack_size = 4096, .icon = NULL, .flags = FlipperInternalApplicationFlagDefault},
     {.app = bt_settings_app, .name = "Bluetooth", .appid = "bt_settings", .stack_size = 4096, .icon = &A_Settings_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = lfrfid_app, .name = "125 kHz RFID", .appid = "lfrfid", .stack_size = 4096, .icon = &A_125khz_14, .flags = FlipperInternalApplicationFlagDefault},
+    {.app = nfc_app, .name = "NFC", .appid = "nfc", .stack_size = 5120, .icon = &A_NFC_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = ble_spam_app, .name = "Bluetooth", .appid = "ble_spam", .stack_size = 8192, .icon = &A_Plugins_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = wlan_app, .name = "WiFi", .appid = "wlan", .stack_size = 8192, .icon = &A_Sub1ghz_14, .flags = FlipperInternalApplicationFlagDefault},
     {.app = bad_usb_app, .name = "Bad USB", .appid = "bad_usb", .stack_size = 4096, .icon = &A_BadUsb_14, .flags = FlipperInternalApplicationFlagDefault},
@@ -110,6 +112,7 @@ const size_t FLIPPER_EXTSETTINGS_APPS_COUNT = COUNT_OF(FLIPPER_EXTSETTINGS_APPS)
 
 const FlipperExternalApplication FLIPPER_EXTERNAL_APPS[] = {
     {.name = "125 kHz RFID", .icon = &A_125khz_14, .path = "lfrfid"},
+    {.name = "NFC", .icon = &A_NFC_14, .path = "nfc"},
     {.name = "Bluetooth", .icon = &A_Plugins_14, .path = "ble_spam"},
     {.name = "WiFi", .icon = &A_Sub1ghz_14, .path = "wlan"},
     {.name = "Bad USB", .icon = &A_BadUsb_14, .path = "bad_usb"},

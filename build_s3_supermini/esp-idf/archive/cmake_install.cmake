@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/magno/Documents/Projetos Esp32/Flipper-Zero-ESP32-Port/components/archive
+# Install script for directory: G:/Projetos Esp32/FlipperZero-Esp32-S3-Supermini/components/archive
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
